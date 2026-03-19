@@ -18,6 +18,20 @@ var commands = make(map[string]*Command)
 
 func initCommands() {
 	// Setup commands
+	selectAll := Command{
+		cmd: "select-all",
+		run: func(window *Window, args ...string) {
+			// Select entire buffer content
+			lastLine := window.CurrentBuffer.Contents[len(window.CurrentBuffer.Contents)-1]
+			window.CurrentBuffer.Selection = &Selection{
+				selectionStart: Position{0, 0},
+				selectionEnd:   Position{len(window.CurrentBuffer.Contents) - 1, len(lastLine) - 1},
+			}
+
+			PrintMessage(window, "Selected all text.")
+		},
+	}
+
 	cutCmd := Command{
 		cmd: "cut",
 		run: func(window *Window, args ...string) {
@@ -49,7 +63,7 @@ func initCommands() {
 			if copyingMethod == 0 {
 				PrintMessage(window, "Copied line to clipboard.")
 			} else {
-				PrintMessage(window, "Copied selection to clipboard.")
+				PrintMessage(window, "Copied selection to clipboard. ")
 			}
 		},
 	}
@@ -59,7 +73,7 @@ func initCommands() {
 		run: func(window *Window, args ...string) {
 			if window.Clipboard != "" {
 				window.CurrentBuffer.PasteText(window, window.Clipboard)
-				PrintMessage(window, "Pasted text to buffer.")
+				PrintMessage(window, "Pasted text to buffer. ")
 			}
 		},
 	}
@@ -142,7 +156,6 @@ func initCommands() {
 				log.Fatalf("Could not reload buffer: %s", err)
 			}
 
-			window.SetCursorPos(window.CurrentBuffer.CursorPos)
 			PrintMessage(window, "Buffer reloaded.")
 		},
 	}
@@ -158,8 +171,8 @@ func initCommands() {
 				}
 
 				pos := window.CurrentBuffer.FindSubstring(input, window.CurrentBuffer.CursorPos)
-				if pos >= 0 {
-					window.SetCursorPos(pos)
+				if pos.X >= 0 && pos.Y >= 0 {
+					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match found.")
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", input))
@@ -177,8 +190,8 @@ func initCommands() {
 				}
 
 				pos := window.CurrentBuffer.FindSubstring(input, window.CurrentBuffer.CursorPos)
-				if pos >= 0 {
-					window.SetCursorPos(pos)
+				if pos.X >= 0 && pos.Y >= 0 {
+					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match found.")
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", input))
@@ -199,8 +212,8 @@ func initCommands() {
 				}
 
 				pos := window.CurrentBuffer.FindAndReplaceSubstring(findStr, replaceStr, window.CurrentBuffer.CursorPos)
-				if pos >= 0 {
-					window.SetCursorPos(pos)
+				if pos.X >= 0 && pos.Y >= 0 {
+					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match replaced successfully.")
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
@@ -220,8 +233,8 @@ func initCommands() {
 				replaceStr := <-inputChannel
 
 				pos := window.CurrentBuffer.FindAndReplaceSubstring(findStr, replaceStr, window.CurrentBuffer.CursorPos)
-				if pos >= 0 {
-					window.SetCursorPos(pos)
+				if pos.X >= 0 && pos.Y >= 0 {
+					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match replaced successfully.")
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
@@ -243,7 +256,6 @@ func initCommands() {
 
 				replacements := window.CurrentBuffer.FindAndReplaceAll(findStr, replaceStr)
 				if replacements > 0 {
-					window.SetCursorPos(window.CurrentBuffer.CursorPos)
 					PrintMessage(window, fmt.Sprintf("Replaced all %d matches successfully.", replacements))
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
@@ -264,7 +276,6 @@ func initCommands() {
 
 				replacements := window.CurrentBuffer.FindAndReplaceAll(findStr, replaceStr)
 				if replacements > 0 {
-					window.SetCursorPos(window.CurrentBuffer.CursorPos)
 					PrintMessage(window, fmt.Sprintf("Replaced all %d matches successfully.", replacements))
 				} else {
 					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
@@ -492,6 +503,7 @@ func initCommands() {
 	}
 
 	// Register commands
+	commands["select-all"] = &selectAll
 	commands["cut"] = &cutCmd
 	commands["copy"] = &copyCmd
 	commands["paste"] = &pasteCmd

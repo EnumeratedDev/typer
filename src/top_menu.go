@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 type TopMenuButton struct {
@@ -140,22 +141,18 @@ func getBufferInfoMsg(window *Window) string {
 		filename = filepath.Base(window.CurrentBuffer.filename)
 	}
 
-	cursorPos := window.CurrentBuffer.CursorPos
-	cursorX, cursorY := window.GetCursorPos2D()
-	cursorX++
-	cursorY++
-
-	chars := len(window.CurrentBuffer.Contents)
-	words := len(strings.Fields(window.CurrentBuffer.Contents))
+	contents := window.CurrentBuffer.GetContentsAsString()
+	chars := len(contents)
+	words := len(strings.Fields(contents))
 
 	ret := Config.BufferInfoMessage
 
 	ret = strings.ReplaceAll(ret, "\n", " ")
 	ret = strings.ReplaceAll(ret, "%F", pathToFile)
 	ret = strings.ReplaceAll(ret, "%f", filename)
-	ret = strings.ReplaceAll(ret, "%x", strconv.Itoa(cursorX))
-	ret = strings.ReplaceAll(ret, "%y", strconv.Itoa(cursorY))
-	ret = strings.ReplaceAll(ret, "%p", strconv.Itoa(cursorPos))
+	ret = strings.ReplaceAll(ret, "%x", strconv.Itoa(window.CurrentBuffer.CursorPos.X+1))
+	ret = strings.ReplaceAll(ret, "%y", strconv.Itoa(window.CurrentBuffer.CursorPos.Y+1))
+	ret = strings.ReplaceAll(ret, "%p", strconv.Itoa(window.CurrentBuffer.PositionToAbsolutePosition(window.CurrentBuffer.CursorPos)+1))
 	ret = strings.ReplaceAll(ret, "%c", strconv.Itoa(chars))
 	ret = strings.ReplaceAll(ret, "%w", strconv.Itoa(words))
 

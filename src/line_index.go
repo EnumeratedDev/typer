@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"strconv"
-	"strings"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 func drawLineIndex(window *Window) {
@@ -16,9 +16,9 @@ func drawLineIndex(window *Window) {
 
 	_, bufferY1, _, bufferY2 := window.GetTextAreaDimensions()
 
-	lineIndex := 1 + buffer.OffsetY
+	lineIndex := 1 + buffer.Offset.Y
 	for y := bufferY1; y <= bufferY2; y++ {
-		if lineIndex > strings.Count(buffer.Contents, "\n")+1 {
+		if lineIndex > len(buffer.Contents) {
 			if Config.ExtendLineIndex {
 				for x := 0; x < lineIndexSize; x++ {
 					screen.SetContent(x, y, ' ', nil, lineIndexStyle)
@@ -42,7 +42,7 @@ func drawLineIndex(window *Window) {
 }
 
 func getLineIndexSize(window *Window) int {
-	i := strings.Count(window.CurrentBuffer.Contents, "\n") + 1
+	i := len(window.CurrentBuffer.Contents)
 	if i == 0 {
 		return 4
 	}
