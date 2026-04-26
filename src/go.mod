@@ -1,4 +1,4 @@
-module Typer
+module typer
 
 go 1.24
 
