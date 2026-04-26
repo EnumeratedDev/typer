@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"slices"
@@ -85,11 +85,11 @@ func readStyles() {
 
 	stylesPaths := make([]string, 0)
 	if runtime.GOOS == "windows" {
-		stylesPaths = append(stylesPaths, path.Join(homeDir, "AppData/Roaming/Typer/styles"))
-		stylesPaths = append(stylesPaths, path.Join(path.Dir(execPath), "etc/typer/styles"))
+		stylesPaths = append(stylesPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/styles"))
+		stylesPaths = append(stylesPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/styles"))
 	} else {
-		stylesPaths = append(stylesPaths, path.Join(homeDir, ".config/typer/styles"))
-		stylesPaths = append(stylesPaths, path.Join(sysconfdir, "typer/styles"))
+		stylesPaths = append(stylesPaths, filepath.Join(homeDir, ".config/typer/styles"))
+		stylesPaths = append(stylesPaths, filepath.Join(sysconfdir, "typer/styles"))
 	}
 
 	for _, stylesPath := range stylesPaths {
@@ -107,7 +107,7 @@ func readStyles() {
 
 		// Read entries in directory
 		for _, entry := range entries {
-			entryPath := path.Join(stylesPath, entry.Name())
+			entryPath := filepath.Join(stylesPath, entry.Name())
 
 			style, err := readStyleYamlFile(entryPath)
 			if err != nil {

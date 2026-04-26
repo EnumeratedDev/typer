@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 
 	"gopkg.in/yaml.v3"
@@ -44,11 +44,11 @@ func readConfig() {
 
 	configPaths := make([]string, 0)
 	if runtime.GOOS == "windows" {
-		configPaths = append(configPaths, path.Join(homeDir, "AppData/Roaming/Typer/config.yml"))
-		configPaths = append(configPaths, path.Join(path.Dir(execPath), "etc/typer/config.yml"))
+		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/config.yml"))
+		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/config.yml"))
 	} else {
-		configPaths = append(configPaths, path.Join(homeDir, ".config/typer/config.yml"))
-		configPaths = append(configPaths, path.Join(sysconfdir, "typer/config.yml"))
+		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/config.yml"))
+		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/config.yml"))
 	}
 
 	for _, configPath := range configPaths {

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -40,11 +40,11 @@ func readKeybindings() {
 
 	configPaths := make([]string, 0)
 	if runtime.GOOS == "windows" {
-		configPaths = append(configPaths, path.Join(homeDir, "AppData/Roaming/Typer/keybindings.yml"))
-		configPaths = append(configPaths, path.Join(path.Dir(execPath), "etc/typer/keybindings.yml"))
+		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/keybindings.yml"))
+		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/keybindings.yml"))
 	} else {
-		configPaths = append(configPaths, path.Join(homeDir, ".config/typer/keybindings.yml"))
-		configPaths = append(configPaths, path.Join(sysconfdir, "typer/keybindings.yml"))
+		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/keybindings.yml"))
+		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/keybindings.yml"))
 	}
 
 	for _, configPath := range configPaths {
