@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"path"
 	"reflect"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"gopkg.in/yaml.v3"
 )
 
 type TyperStyle struct {
@@ -76,36 +78,42 @@ func readStyles() {
 		log.Fatalf("Could not get home directory: %s", err)
 	}
 
-	if stat, err := os.Stat(path.Join(homeDir, ".config/typer/styles/")); err == nil && stat.IsDir() {
-		entries, err := os.ReadDir(path.Join(homeDir, ".config/typer/styles/"))
-		if err != nil {
-			log.Fatalf("Could not read user style directory: %s", err)
-		}
-
-		for _, entry := range entries {
-			entryPath := path.Join(homeDir, ".config/typer/styles/", entry.Name())
-			style, err := readStyleYamlFile(entryPath)
-			if err != nil {
-				log.Fatalf("Could not read style file (%s): %s", entryPath, err)
-			}
-
-			if _, ok := AvailableStyles[style.Name]; !ok {
-				AvailableStyles[style.Name] = style
-			}
-		}
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Could not get path to executable: %s", err)
 	}
-	if stat, err := os.Stat(path.Join(sysconfdir, "typer/styles/")); err == nil && stat.IsDir() {
-		entries, err := os.ReadDir(path.Join(sysconfdir, "typer/styles/"))
+
+	stylesPaths := make([]string, 0)
+	if runtime.GOOS == "windows" {
+		stylesPaths = append(stylesPaths, path.Join(homeDir, "AppData/Roaming/Typer/styles"))
+		stylesPaths = append(stylesPaths, path.Join(path.Dir(execPath), "etc/typer/styles"))
+	} else {
+		stylesPaths = append(stylesPaths, path.Join(homeDir, ".config/typer/styles"))
+		stylesPaths = append(stylesPaths, path.Join(sysconfdir, "typer/styles"))
+	}
+
+	for _, stylesPath := range stylesPaths {
+		// Ensure directory exists at path
+		if stat, err := os.Stat(stylesPath); err != nil || !stat.IsDir() {
+			fmt.Println(stylesPath)
+			continue
+		}
+
+		// Get directory entries
+		entries, err := os.ReadDir(stylesPath)
 		if err != nil {
 			log.Fatalf("Could not read user style directory: %s", err)
 		}
 
+		// Read entries in directory
 		for _, entry := range entries {
-			entryPath := path.Join(path.Join(sysconfdir, "typer/styles/"), entry.Name())
+			entryPath := path.Join(stylesPath, entry.Name())
+
 			style, err := readStyleYamlFile(entryPath)
 			if err != nil {
 				log.Fatalf("Could not read style file (%s): %s", entryPath, err)
 			}
+
 			if _, ok := AvailableStyles[style.Name]; !ok {
 				AvailableStyles[style.Name] = style
 			}

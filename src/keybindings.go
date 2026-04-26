@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"gopkg.in/yaml.v3"
 )
 
 type TyperKeybindings struct {
@@ -31,25 +33,39 @@ func readKeybindings() {
 		log.Fatalf("Could not get home directory: %s", err)
 	}
 
-	if _, err := os.Stat(path.Join(homeDir, ".config/typer/keybindings.yml")); err == nil {
-		data, err := os.ReadFile(path.Join(homeDir, ".config/typer/keybindings.yml"))
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Could not get path to executable: %s", err)
+	}
+
+	configPaths := make([]string, 0)
+	if runtime.GOOS == "windows" {
+		configPaths = append(configPaths, path.Join(homeDir, "AppData/Roaming/Typer/keybindings.yml"))
+		configPaths = append(configPaths, path.Join(path.Dir(execPath), "etc/typer/keybindings.yml"))
+	} else {
+		configPaths = append(configPaths, path.Join(homeDir, ".config/typer/keybindings.yml"))
+		configPaths = append(configPaths, path.Join(sysconfdir, "typer/keybindings.yml"))
+	}
+
+	for _, configPath := range configPaths {
+		// Ensure config exists at path
+		if _, err := os.Stat(configPath); err != nil {
+			continue
+		}
+
+		// Read config file
+		data, err := os.ReadFile(configPath)
 		if err != nil {
 			log.Fatalf("Could not read keybindings.yml: %s", err)
 		}
+
+		// Unmarshal contents into struct
 		err = yaml.Unmarshal(data, &Keybindings)
 		if err != nil {
 			log.Fatalf("Could not unmarshal keybindings.yml: %s", err)
 		}
-	} else if _, err := os.Stat(path.Join(sysconfdir, "typer/keybindings.yml")); err == nil {
-		reader, err := os.Open(path.Join(sysconfdir, "typer/keybindings.yml"))
-		if err != nil {
-			log.Fatalf("Could not read keybindings.yml: %s", err)
-		}
-		err = yaml.NewDecoder(reader).Decode(&Keybindings)
-		if err != nil {
-			log.Fatalf("Could not read keybindings.yml: %s", err)
-		}
-		reader.Close()
+
+		break
 	}
 }
 

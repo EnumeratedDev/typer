@@ -1,10 +1,12 @@
 package main
 
 import (
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"path"
+	"runtime"
+
+	"gopkg.in/yaml.v3"
 )
 
 type TyperConfig struct {
@@ -35,25 +37,39 @@ func readConfig() {
 		log.Fatalf("Could not get home directory: %s", err)
 	}
 
-	if _, err := os.Stat(path.Join(homeDir, ".config/typer/config.yml")); err == nil {
-		data, err := os.ReadFile(path.Join(homeDir, ".config/typer/config.yml"))
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Could not get path to executable: %s", err)
+	}
+
+	configPaths := make([]string, 0)
+	if runtime.GOOS == "windows" {
+		configPaths = append(configPaths, path.Join(homeDir, "AppData/Roaming/Typer/config.yml"))
+		configPaths = append(configPaths, path.Join(path.Dir(execPath), "etc/typer/config.yml"))
+	} else {
+		configPaths = append(configPaths, path.Join(homeDir, ".config/typer/config.yml"))
+		configPaths = append(configPaths, path.Join(sysconfdir, "typer/config.yml"))
+	}
+
+	for _, configPath := range configPaths {
+		// Ensure config exists at path
+		if _, err := os.Stat(configPath); err != nil {
+			continue
+		}
+
+		// Read config file
+		data, err := os.ReadFile(configPath)
 		if err != nil {
 			log.Fatalf("Could not read config.yml: %s", err)
 		}
+
+		// Unmarshal contents into struct
 		err = yaml.Unmarshal(data, &Config)
 		if err != nil {
 			log.Fatalf("Could not unmarshal config.yml: %s", err)
 		}
-	} else if _, err := os.Stat(path.Join(sysconfdir, "typer/config.yml")); err == nil {
-		reader, err := os.Open(path.Join(sysconfdir, "typer/config.yml"))
-		if err != nil {
-			log.Fatalf("Could not read config.yml: %s", err)
-		}
-		err = yaml.NewDecoder(reader).Decode(&Config)
-		if err != nil {
-			log.Fatalf("Could not read config.yml: %s", err)
-		}
-		reader.Close()
+
+		break
 	}
 
 	// Validate config options
