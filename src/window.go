@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"typer/runestring"
 	"unicode"
 
 	"github.com/gdamore/tcell/v2"
@@ -32,7 +33,7 @@ type Window struct {
 	ShowLineIndex bool
 	CursorMode    CursorMode
 
-	Clipboard string
+	Clipboard runestring.RuneString
 
 	CurrentBuffer *Buffer
 
@@ -482,7 +483,7 @@ func (window *Window) handleMouseInput(ev *tcell.EventMouse) {
 
 			// Offset mouse X for each tab character in line
 			posInLine := make([]int, 0)
-			for i, r := range window.CurrentBuffer.Contents[mouseBufferPos.Y] + " " {
+			for i, r := range append(window.CurrentBuffer.Contents[mouseBufferPos.Y], ' ') {
 				if r == '\t' {
 					for j := 0; j < Config.TabIndentation; j++ {
 						posInLine = append(posInLine, i)
@@ -521,7 +522,7 @@ func (window *Window) handleMouseInput(ev *tcell.EventMouse) {
 				}
 			} else if currentPos == mouseBufferPos && time.Since(lastClickTime).Milliseconds() < 300 {
 				selectedText := window.CurrentBuffer.GetSelectedText()
-				if window.CurrentBuffer.Selection == nil || strings.HasSuffix(selectedText, "\n") {
+				if window.CurrentBuffer.Selection == nil || strings.HasSuffix(string(selectedText), "\n") {
 					// Select word
 					cursorPos := window.CurrentBuffer.CursorPos
 					startOfWord := window.CurrentBuffer.CursorPos.X

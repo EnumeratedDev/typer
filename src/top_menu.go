@@ -143,7 +143,7 @@ func getBufferInfoMsg(window *Window) string {
 
 	contents := window.CurrentBuffer.GetContentsAsString()
 	chars := len(contents)
-	words := len(strings.Fields(contents))
+	words := len(strings.Fields(string(contents)))
 
 	ret := Config.BufferInfoMessage
 

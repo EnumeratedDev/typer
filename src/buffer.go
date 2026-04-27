@@ -1,18 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+	"typer/runestring"
 
 	"github.com/gdamore/tcell/v2"
 )
 
 type Buffer struct {
 	Name     string
-	Contents []string
+	Contents []runestring.RuneString
 
 	CursorPos Position
 	Offset    Position
@@ -55,7 +57,7 @@ func drawBuffer(window *Window) {
 	bufferX, bufferY, _, _ := window.GetTextAreaDimensions()
 
 	for lineIndex, line := range buffer.Contents {
-		for runeIndex, r := range line + " " {
+		for runeIndex, r := range append(line, ' ') {
 			drawPosition := Position{runeIndex, lineIndex}
 
 			if x-buffer.Offset.X >= bufferX && y-buffer.Offset.Y >= bufferY {
@@ -121,7 +123,7 @@ func (buffer *Buffer) Load() error {
 		return err
 	}
 
-	buffer.Contents = strings.Split(string(content), "\n")
+	buffer.Contents = runestring.Split(bytes.Runes(content), '\n')
 	return nil
 }
 
@@ -144,10 +146,10 @@ func (buffer *Buffer) Save() error {
 	// Add newline at the end of buffer Contents
 	line := buffer.Contents[len(buffer.Contents)-1]
 	if len(line) != 0 {
-		buffer.Contents = append(buffer.Contents, "")
+		buffer.Contents = append(buffer.Contents, make(runestring.RuneString, 0))
 	}
 
-	err := os.WriteFile(buffer.filename, []byte(buffer.GetContentsAsString()), 0644)
+	err := os.WriteFile(buffer.filename, []byte(string(buffer.GetContentsAsString())), 0644)
 	if err != nil {
 		return err
 	}
@@ -155,28 +157,28 @@ func (buffer *Buffer) Save() error {
 	return nil
 }
 
-func (buffer *Buffer) GetContentsAsString() string {
-	finalText := strings.Builder{}
+func (buffer *Buffer) GetContentsAsString() runestring.RuneString {
+	finalText := make(runestring.RuneString, 0)
 	for i, line := range buffer.Contents {
 		for _, rune := range line {
-			finalText.WriteRune(rune)
+			finalText = append(finalText, rune)
 		}
 
 		if i != len(buffer.Contents)-1 {
-			finalText.WriteRune('\n')
+			finalText = append(finalText, '\n')
 		}
 	}
 
-	return finalText.String()
+	return finalText
 }
 
 func (buffer *Buffer) PositionToAbsolutePosition(position Position) int {
 	i := 0
 	for lineIndex, line := range buffer.Contents {
 		if len(line) == 0 {
-			line += " "
+			line = append(line, ' ')
 		}
-		for runeIndex, _ := range line + " " {
+		for runeIndex, _ := range append(line, ' ') {
 			if position.Equals(runeIndex, lineIndex) {
 				return i
 			}
@@ -191,7 +193,7 @@ func (buffer *Buffer) AbsolutePositionToPosition(absolutePosition int) Position 
 	i := 0
 
 	for lineIndex, line := range buffer.Contents {
-		for runeIndex, _ := range line + " " {
+		for runeIndex, _ := range append(line, ' ') {
 			if i == absolutePosition {
 				return Position{runeIndex, lineIndex}
 			}
@@ -215,19 +217,19 @@ func (buffer *Buffer) GetSelectionEdges() (Position, Position) {
 	}
 }
 
-func (buffer *Buffer) GetSelectedText() string {
+func (buffer *Buffer) GetSelectedText() runestring.RuneString {
 	if buffer.Selection == nil {
-		return ""
+		return make(runestring.RuneString, 0)
 	}
 	if len(buffer.Contents) == 0 {
-		return ""
+		return make(runestring.RuneString, 0)
 	}
 
 	edge1, edge2 := buffer.GetSelectionEdges()
 
-	selectedText := strings.Builder{}
+	selectedText := make(runestring.RuneString, 0)
 	if r := buffer.GetCharAtPosition(edge1); r != 0 {
-		selectedText.WriteRune(r)
+		selectedText = append(selectedText, r)
 	}
 
 	for ComparePositions(edge1, edge2) < 0 {
@@ -243,21 +245,21 @@ func (buffer *Buffer) GetSelectedText() string {
 		}
 
 		if r := buffer.GetCharAtPosition(edge1); r != 0 {
-			selectedText.WriteRune(buffer.GetCharAtPosition(edge1))
+			selectedText = append(selectedText, buffer.GetCharAtPosition(edge1))
 		}
 	}
 
-	return selectedText.String()
+	return selectedText
 }
 
-func (buffer *Buffer) CutText(window *Window) (string, int) {
+func (buffer *Buffer) CutText(window *Window) (runestring.RuneString, int) {
 	if buffer.Selection == nil {
 		// Cut current line
-		cutText := buffer.Contents[buffer.CursorPos.Y] + "\n"
+		cutText := append(buffer.Contents[buffer.CursorPos.Y], '\n')
 
 		// Remove line from buffer contents
 		if len(buffer.Contents) == 1 {
-			buffer.Contents[0] = ""
+			buffer.Contents[0] = make(runestring.RuneString, 0)
 		} else {
 			buffer.Contents = slices.Delete(buffer.Contents, buffer.CursorPos.Y, buffer.CursorPos.Y+1)
 		}
@@ -284,10 +286,10 @@ func (buffer *Buffer) CutText(window *Window) (string, int) {
 	}
 }
 
-func (buffer *Buffer) CopyText() (string, int) {
+func (buffer *Buffer) CopyText() (runestring.RuneString, int) {
 	if buffer.Selection == nil {
 		// Cut current line
-		copiedText := buffer.Contents[buffer.CursorPos.Y] + "\n"
+		copiedText := append(buffer.Contents[buffer.CursorPos.Y], '\n')
 
 		return copiedText, 0
 	} else {
@@ -296,7 +298,7 @@ func (buffer *Buffer) CopyText() (string, int) {
 	}
 }
 
-func (buffer *Buffer) PasteText(window *Window, text string) {
+func (buffer *Buffer) PasteText(window *Window, text runestring.RuneString) {
 	contents := buffer.GetContentsAsString()
 
 	// Remove selected text
@@ -309,8 +311,8 @@ func (buffer *Buffer) PasteText(window *Window, text string) {
 			absEdge2 = len(buffer.Contents) - 1
 		}
 
-		contents = contents[:absEdge1] + contents[absEdge2+1:]
-		buffer.Contents = strings.Split(contents, "\n")
+		contents = append(contents[:absEdge1], contents[absEdge2+1:]...)
+		buffer.Contents = runestring.Split(contents, '\n')
 		buffer.CursorPos = buffer.AbsolutePositionToPosition(absEdge1)
 		buffer.Selection = nil
 	}
@@ -318,7 +320,7 @@ func (buffer *Buffer) PasteText(window *Window, text string) {
 	buffer.WriteString(text)
 }
 
-func (buffer *Buffer) FindSubstring(substring string, afterPos Position) Position {
+func (buffer *Buffer) FindSubstring(substring runestring.RuneString, afterPos Position) Position {
 	// Return no match if afterPos is larger than the buffer contents size
 	contents := buffer.GetContentsAsString()
 	absAfterPos := buffer.PositionToAbsolutePosition(afterPos)
@@ -327,7 +329,7 @@ func (buffer *Buffer) FindSubstring(substring string, afterPos Position) Positio
 		return Position{-1, -1}
 	}
 
-	index := strings.Index(contents[absAfterPos+1:], substring)
+	index := runestring.Index(contents[absAfterPos+1:], substring)
 
 	if index != -1 {
 		index += absAfterPos + 1
@@ -335,7 +337,7 @@ func (buffer *Buffer) FindSubstring(substring string, afterPos Position) Positio
 	return buffer.AbsolutePositionToPosition(index)
 }
 
-func (buffer *Buffer) FindAndReplaceSubstring(substring, replacement string, afterPos Position) Position {
+func (buffer *Buffer) FindAndReplaceSubstring(substring, replacement runestring.RuneString, afterPos Position) Position {
 	// Return no match if afterPos is larger than the buffer contents size
 	contents := buffer.GetContentsAsString()
 	absAfterPos := buffer.PositionToAbsolutePosition(afterPos)
@@ -344,21 +346,22 @@ func (buffer *Buffer) FindAndReplaceSubstring(substring, replacement string, aft
 		return Position{-1, -1}
 	}
 
-	index := strings.Index(contents[absAfterPos+1:], substring)
+	index := runestring.Index(contents[absAfterPos+1:], substring)
 
 	if index != -1 {
 		index += absAfterPos + 1
 	}
 
 	// Replace substring with replacement string
-	contents = contents[:index] + replacement + contents[index+len(substring):]
+	contents = append(contents[:index], replacement...)
+	contents = append(contents, contents[index+len(substring):]...)
 
-	buffer.Contents = strings.Split(contents, "\n")
+	buffer.Contents = runestring.Split(contents, '\n')
 
 	return buffer.AbsolutePositionToPosition(index)
 }
 
-func (buffer *Buffer) FindAndReplaceAll(substring, replacement string) int {
+func (buffer *Buffer) FindAndReplaceAll(substring, replacement runestring.RuneString) int {
 	replacements := 0
 	position := Position{}
 	for position.X != -1 && position.Y != -1 {
@@ -444,26 +447,25 @@ func (buffer *Buffer) MoveRight(i int) bool {
 func (buffer *Buffer) WriteRune(r rune) {
 	if r == '\n' {
 		if buffer.CursorPos.Y == len(buffer.Contents) {
-			buffer.Contents = append(buffer.Contents, "")
+			buffer.Contents = append(buffer.Contents, make(runestring.RuneString, 0))
 		} else {
-			buffer.Contents = slices.Insert(buffer.Contents, buffer.CursorPos.Y+1, "")
+			buffer.Contents = slices.Insert(buffer.Contents, buffer.CursorPos.Y+1, make(runestring.RuneString, 0))
 		}
 
 		// Move line content after cursor X to the new line
 		line := buffer.Contents[buffer.CursorPos.Y]
-		buffer.Contents[buffer.CursorPos.Y+1] = line[buffer.CursorPos.X:] + buffer.Contents[buffer.CursorPos.Y+1]
+		buffer.Contents[buffer.CursorPos.Y+1] = slices.Insert(buffer.Contents[buffer.CursorPos.Y+1], 0, line[buffer.CursorPos.X:]...)
 		buffer.Contents[buffer.CursorPos.Y] = line[:buffer.CursorPos.X]
 
 		buffer.MoveDown(1)
 		buffer.CursorPos.X = 0
 	} else {
-		line := buffer.Contents[buffer.CursorPos.Y]
-		buffer.Contents[buffer.CursorPos.Y] = line[:buffer.CursorPos.X] + string(r) + line[buffer.CursorPos.X:]
+		buffer.Contents[buffer.CursorPos.Y] = slices.Insert(buffer.Contents[buffer.CursorPos.Y], buffer.CursorPos.X, r)
 		buffer.MoveRight(1)
 	}
 }
 
-func (buffer *Buffer) WriteString(str string) {
+func (buffer *Buffer) WriteString(str runestring.RuneString) {
 	for _, r := range str {
 		buffer.WriteRune(r)
 	}
@@ -485,7 +487,7 @@ func (buffer *Buffer) Delete(i int) bool {
 				buffer.Contents = slices.Delete(buffer.Contents, buffer.CursorPos.Y+1, buffer.CursorPos.Y+2)
 
 				// Append deleted line text to end of current line
-				buffer.Contents[buffer.CursorPos.Y] += deletedLine
+				buffer.Contents[buffer.CursorPos.Y] = append(buffer.Contents[buffer.CursorPos.Y], deletedLine...)
 
 				buffer.CursorPos.X = len(buffer.Contents[buffer.CursorPos.Y]) - len(deletedLine)
 			} else {
@@ -494,7 +496,7 @@ func (buffer *Buffer) Delete(i int) bool {
 			}
 		} else {
 			line := buffer.Contents[buffer.CursorPos.Y]
-			buffer.Contents[buffer.CursorPos.Y] = line[:buffer.CursorPos.X] + line[buffer.CursorPos.X+1:]
+			buffer.Contents[buffer.CursorPos.Y] = append(line[:buffer.CursorPos.X], line[buffer.CursorPos.X+1:]...)
 		}
 
 		remainingSteps--
@@ -589,7 +591,7 @@ func CreateFileBuffer(filename string, openNonExistentFile bool) (*Buffer, error
 
 	buffer := Buffer{
 		Name:      filename,
-		Contents:  make([]string, 1),
+		Contents:  make([]runestring.RuneString, 1),
 		CursorPos: Position{0, 0},
 		canSave:   true,
 		filename:  abs,
@@ -612,7 +614,7 @@ func CreateFileBuffer(filename string, openNonExistentFile bool) (*Buffer, error
 func CreateBuffer(bufferName string) (*Buffer, error) {
 	buffer := Buffer{
 		Name:      bufferName,
-		Contents:  make([]string, 1),
+		Contents:  make([]runestring.RuneString, 1),
 		CursorPos: Position{0, 0},
 		canSave:   true,
 		filename:  "",

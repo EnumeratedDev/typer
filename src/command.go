@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"typer/runestring"
 )
 
 type Command struct {
@@ -71,7 +72,7 @@ func initCommands() {
 	pasteCmd := Command{
 		cmd: "paste",
 		run: func(window *Window, args ...string) {
-			if window.Clipboard != "" {
+			if len(window.Clipboard) != 0 {
 				window.CurrentBuffer.PasteText(window, window.Clipboard)
 				PrintMessage(window, "Pasted text to buffer. ")
 			}
@@ -164,9 +165,9 @@ func initCommands() {
 		cmd: "find",
 		run: func(window *Window, args ...string) {
 			if len(args) >= 1 {
-				input := args[0]
+				input := runestring.RuneString(args[0])
 
-				if input == "" {
+				if len(input) == 0 {
 					return
 				}
 
@@ -175,7 +176,7 @@ func initCommands() {
 					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match found.")
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", input))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(input)))
 				}
 
 				return
@@ -183,9 +184,9 @@ func initCommands() {
 
 			inputChannel := RequestInput(window, "Substring to search for:", "")
 			go func() {
-				input := <-inputChannel
+				input := runestring.RuneString(<-inputChannel)
 
-				if input == "" {
+				if len(input) == 0 {
 					return
 				}
 
@@ -194,7 +195,7 @@ func initCommands() {
 					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match found.")
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", input))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(input)))
 				}
 			}()
 		},
@@ -204,10 +205,10 @@ func initCommands() {
 		cmd: "replace",
 		run: func(window *Window, args ...string) {
 			if len(args) >= 2 {
-				findStr := args[0]
-				replaceStr := args[1]
+				findStr := runestring.RuneString(args[0])
+				replaceStr := runestring.RuneString(args[1])
 
-				if findStr == "" {
+				if len(findStr) == 0 {
 					return
 				}
 
@@ -216,7 +217,7 @@ func initCommands() {
 					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match replaced successfully.")
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
 				}
 
 				return
@@ -224,20 +225,20 @@ func initCommands() {
 
 			go func() {
 				inputChannel := RequestInput(window, "Substring to search for:", "")
-				findStr := <-inputChannel
-				if findStr == "" {
+				findStr := runestring.RuneString(<-inputChannel)
+				if len(findStr) == 0 {
 					return
 				}
 
 				inputChannel = RequestInput(window, "String to replace with:", "")
-				replaceStr := <-inputChannel
+				replaceStr := runestring.RuneString(<-inputChannel)
 
 				pos := window.CurrentBuffer.FindAndReplaceSubstring(findStr, replaceStr, window.CurrentBuffer.CursorPos)
 				if pos.X >= 0 && pos.Y >= 0 {
 					window.CurrentBuffer.CursorPos = pos
 					PrintMessage(window, "Match replaced successfully.")
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
 				}
 			}()
 		},
@@ -247,10 +248,10 @@ func initCommands() {
 		cmd: "replace-all",
 		run: func(window *Window, args ...string) {
 			if len(args) >= 2 {
-				findStr := args[0]
-				replaceStr := args[1]
+				findStr := runestring.RuneString(args[0])
+				replaceStr := runestring.RuneString(args[1])
 
-				if findStr == "" {
+				if len(findStr) == 0 {
 					return
 				}
 
@@ -258,7 +259,7 @@ func initCommands() {
 				if replacements > 0 {
 					PrintMessage(window, fmt.Sprintf("Replaced all %d matches successfully.", replacements))
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
 				}
 
 				return
@@ -266,19 +267,19 @@ func initCommands() {
 
 			go func() {
 				inputChannel := RequestInput(window, "Substring to search for:", "")
-				findStr := <-inputChannel
-				if findStr == "" {
+				findStr := runestring.RuneString(<-inputChannel)
+				if len(findStr) == 0 {
 					return
 				}
 
 				inputChannel = RequestInput(window, "String to replace with:", "")
-				replaceStr := <-inputChannel
+				replaceStr := runestring.RuneString(<-inputChannel)
 
 				replacements := window.CurrentBuffer.FindAndReplaceAll(findStr, replaceStr)
 				if replacements > 0 {
 					PrintMessage(window, fmt.Sprintf("Replaced all %d matches successfully.", replacements))
 				} else {
-					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", findStr))
+					PrintMessage(window, fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
 				}
 			}()
 		},
