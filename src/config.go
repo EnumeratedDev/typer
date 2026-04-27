@@ -43,10 +43,15 @@ func readConfig() {
 	}
 
 	configPaths := make([]string, 0)
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/config.yml"))
 		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/config.yml"))
-	} else {
+	case "darwin":
+		configPaths = append(configPaths, filepath.Join(homeDir, "Library/Typer/config.yml"))
+		configPaths = append(configPaths, "/Library/Typer/config.yml")
+		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/config.yml"))
+	default:
 		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/config.yml"))
 		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/config.yml"))
 	}

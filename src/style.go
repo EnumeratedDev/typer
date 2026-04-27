@@ -84,10 +84,15 @@ func readStyles() {
 	}
 
 	stylesPaths := make([]string, 0)
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		stylesPaths = append(stylesPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/styles"))
-		stylesPaths = append(stylesPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/styles"))
-	} else {
+		stylesPaths = append(stylesPaths, filepath.Join(filepath.Dir(execPath), "config/styles"))
+	case "darwin":
+		stylesPaths = append(stylesPaths, filepath.Join(homeDir, "Library/Typer/styles"))
+		stylesPaths = append(stylesPaths, "/Library/Typer/styles")
+		stylesPaths = append(stylesPaths, filepath.Join(sysconfdir, "typer/styles"))
+	default:
 		stylesPaths = append(stylesPaths, filepath.Join(homeDir, ".config/typer/styles"))
 		stylesPaths = append(stylesPaths, filepath.Join(sysconfdir, "typer/styles"))
 	}

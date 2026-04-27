@@ -39,10 +39,15 @@ func readKeybindings() {
 	}
 
 	configPaths := make([]string, 0)
-	if runtime.GOOS == "windows" {
+	switch runtime.GOOS {
+	case "windows":
 		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/keybindings.yml"))
 		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/keybindings.yml"))
-	} else {
+	case "darwin":
+		configPaths = append(configPaths, filepath.Join(homeDir, "Library/Typer/keybindings.yml"))
+		configPaths = append(configPaths, "/Library/Typer/keybindings.yml")
+		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/keybindings.yml"))
+	default:
 		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/keybindings.yml"))
 		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/keybindings.yml"))
 	}
