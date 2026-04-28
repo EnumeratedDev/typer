@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -118,12 +117,24 @@ func (buffer *Buffer) Load() error {
 		buffer.filename = filepath.Join(homedir, buffer.filename[2:])
 	}
 
-	content, err := os.ReadFile(buffer.filename)
+	contentBytes, err := os.ReadFile(buffer.filename)
 	if err != nil {
 		return err
 	}
+	content := runestring.RuneString(string(contentBytes))
 
-	buffer.Contents = runestring.Split(bytes.Runes(content), '\n')
+	if len(content) != 0 {
+		buffer.Contents = runestring.Split(content, '\n')
+
+		// Add empty line at end of buffer for last newline
+		if content[len(content)-1] == '\n' {
+			buffer.Contents = append(buffer.Contents, make(runestring.RuneString, 0))
+		}
+
+		buffer.CursorPos.Y = len(buffer.Contents) - 1
+		buffer.CursorPos.X = len(buffer.Contents[buffer.CursorPos.Y])
+	}
+
 	return nil
 }
 
