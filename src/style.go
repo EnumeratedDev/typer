@@ -100,7 +100,6 @@ func readStyles() {
 	for _, stylesPath := range stylesPaths {
 		// Ensure directory exists at path
 		if stat, err := os.Stat(stylesPath); err != nil || !stat.IsDir() {
-			fmt.Println(stylesPath)
 			continue
 		}
 
