@@ -10,6 +10,7 @@
 |      Distribution      | Package name         |
 |:----------------------:|:---------------------|
 | Arch Linux/Artix Linux | `typer` from the AUR |
+| Tide Linux | `typer` from the main repository |
 #### From source:
 - Download `go` from your package manager or from the go website
 - Downlaod `which` from your package manager
