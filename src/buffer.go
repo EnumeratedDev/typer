@@ -160,9 +160,7 @@ func (buffer *Buffer) Save() error {
 func (buffer *Buffer) GetContentsAsString() runestring.RuneString {
 	finalText := make(runestring.RuneString, 0)
 	for i, line := range buffer.Contents {
-		for _, rune := range line {
-			finalText = append(finalText, rune)
-		}
+		finalText = append(finalText, line...)
 
 		if i != len(buffer.Contents)-1 {
 			finalText = append(finalText, '\n')
@@ -277,6 +275,8 @@ func (buffer *Buffer) CutText(window *Window) (runestring.RuneString, int) {
 		// Remove selected text
 		_, edge2 := buffer.GetSelectionEdges()
 		buffer.CursorPos = edge2
+		buffer.MoveRight(1)
+
 		buffer.Delete(len(cutText))
 
 		// Remove selection
@@ -311,7 +311,7 @@ func (buffer *Buffer) PasteText(window *Window, text runestring.RuneString) {
 			absEdge2 = len(buffer.Contents) - 1
 		}
 
-		contents = append(contents[:absEdge1], contents[absEdge2+1:]...)
+		contents = slices.Delete(contents, absEdge1, absEdge2+1)
 		buffer.Contents = runestring.Split(contents, '\n')
 		buffer.CursorPos = buffer.AbsolutePositionToPosition(absEdge1)
 		buffer.Selection = nil
@@ -353,8 +353,7 @@ func (buffer *Buffer) FindAndReplaceSubstring(substring, replacement runestring.
 	}
 
 	// Replace substring with replacement string
-	contents = append(contents[:index], replacement...)
-	contents = append(contents, contents[index+len(substring):]...)
+	contents = slices.Insert(contents, index, replacement...)
 
 	buffer.Contents = runestring.Split(contents, '\n')
 
@@ -495,8 +494,7 @@ func (buffer *Buffer) Delete(i int) bool {
 				return false
 			}
 		} else {
-			line := buffer.Contents[buffer.CursorPos.Y]
-			buffer.Contents[buffer.CursorPos.Y] = append(line[:buffer.CursorPos.X], line[buffer.CursorPos.X+1:]...)
+			buffer.Contents[buffer.CursorPos.Y] = slices.Delete(buffer.Contents[buffer.CursorPos.Y], buffer.CursorPos.X, buffer.CursorPos.X+1)
 		}
 
 		remainingSteps--
