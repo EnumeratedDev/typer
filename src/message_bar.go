@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"time"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 type TyperMessage struct {
@@ -12,7 +13,7 @@ type TyperMessage struct {
 
 var messageLog = make([]TyperMessage, 0)
 
-func PrintMessage(window *Window, message string) {
+func (window *Window) PrintMessage(message string) {
 	messageLog = append(messageLog, TyperMessage{timestamp: time.Now().UnixMilli(), message: message})
 
 	err := window.screen.PostEvent(tcell.NewEventInterrupt(nil))

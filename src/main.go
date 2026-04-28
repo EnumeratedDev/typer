@@ -29,7 +29,7 @@ func main() {
 		for i, file := range os.Args[1:] {
 			b, err := CreateFileBuffer(file, true)
 			if err != nil {
-				PrintMessage(window, "Could not open file: "+file)
+				window.PrintMessage("Could not open file: " + file)
 				continue
 			}
 

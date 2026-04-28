@@ -94,7 +94,7 @@ func initTopMenu() {
 
 			d := CreateDropdownMenu(buffersSlice, 0, y, 0, func(i int) {
 				window.CurrentBuffer = Buffers[i]
-				PrintMessage(window, fmt.Sprintf("Set current buffer to '%s'.", window.CurrentBuffer.Name))
+				window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'.", window.CurrentBuffer.Name))
 				ClearDropdowns()
 				window.CursorMode = CursorModeBuffer
 			})

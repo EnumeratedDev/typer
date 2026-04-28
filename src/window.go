@@ -86,7 +86,7 @@ func CreateWindow() (*Window, error) {
 		if ok := SetCurrentStyle(screen, Config.FallbackStyle); !ok {
 			// Use hard-coded fallback style
 			screen.SetStyle(tcell.StyleDefault.Foreground(CurrentStyle.BufferAreaFg).Background(CurrentStyle.BufferAreaBg))
-			PrintMessage(&window, "Could not set style either to selected one nor to fallback one!")
+			window.PrintMessage("Could not set style either to selected one nor to fallback one!")
 		}
 	}
 
