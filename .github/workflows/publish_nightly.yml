@@ -1,0 +1,68 @@
+name: Publish nightly
+
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**"
+      - "!*.md"
+      - "!.github/**"
+      - ".github/workflows/publish_nightly.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, darwin, freebsd, windows]
+        arch: [amd64, arm64]
+    steps:
+      - name: Setup environment
+        run: echo "FILENAME=typer-nightly-$(date --iso-8601)-${{ matrix.os }}-${{ matrix.arch }}" >> $GITHUB_ENV
+      - name: Fetch repository
+        uses: actions/checkout@v6
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+      - name: Build using make
+        run: make GOOS=${{ matrix.os }} GOARCH=${{ matrix.arch }}
+      - name: Setup archive contents
+        run: |
+          mkdir -p staging/$FILENAME
+          cp build/* -t staging/$FILENAME/
+          cp -r config staging/$FILENAME/config
+      - name: Create tarball
+        if: matrix.os != 'windows'
+        run: |
+          cd staging
+          tar -czvf $FILENAME.tar.gz $FILENAME
+      - name: Create zip
+        if: matrix.os == 'windows'
+        run: |
+          cd staging/$FILENAME
+          zip -r ../$FILENAME.zip *
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}-${{ matrix.arch }}
+          path: staging/${{ env.FILENAME }}.*
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Update nightly release
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: nightly
+          name: Nightly
+          body: |
+            **This is the nightly release of Typer. Expect bugs and unfinished features**
+          files: artifacts/*
