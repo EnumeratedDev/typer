@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -23,54 +21,29 @@ type Keybinding struct {
 
 var Keybindings TyperKeybindings
 
-func readKeybindings() {
+func readKeybindingsConfig() {
 	Keybindings = TyperKeybindings{
 		Keybindings: make([]Keybinding, 0),
 	}
 
-	homeDir, err := os.UserHomeDir()
+	// Get keybindings config path
+	keybindingsConfigPath := GetConfigPath("keybindings.yml")
+
+	// Ensure config exists at path
+	if keybindingsConfigPath == "" {
+		log.Fatalf("keybindings.yml not found in any config directory")
+	}
+
+	// Read config file
+	data, err := os.ReadFile(keybindingsConfigPath)
 	if err != nil {
-		log.Fatalf("Could not get home directory: %s", err)
+		log.Fatalf("Could not read keybindings.yml: %s", err)
 	}
 
-	execPath, err := os.Executable()
+	// Unmarshal contents into struct
+	err = yaml.Unmarshal(data, &Keybindings)
 	if err != nil {
-		log.Fatalf("Could not get path to executable: %s", err)
-	}
-
-	configPaths := make([]string, 0)
-	switch runtime.GOOS {
-	case "windows":
-		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/keybindings.yml"))
-		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/keybindings.yml"))
-	case "darwin":
-		configPaths = append(configPaths, filepath.Join(homeDir, "Library/Typer/keybindings.yml"))
-		configPaths = append(configPaths, "/Library/Typer/keybindings.yml")
-		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/keybindings.yml"))
-	default:
-		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/keybindings.yml"))
-		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/keybindings.yml"))
-	}
-
-	for _, configPath := range configPaths {
-		// Ensure config exists at path
-		if _, err := os.Stat(configPath); err != nil {
-			continue
-		}
-
-		// Read config file
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			log.Fatalf("Could not read keybindings.yml: %s", err)
-		}
-
-		// Unmarshal contents into struct
-		err = yaml.Unmarshal(data, &Keybindings)
-		if err != nil {
-			log.Fatalf("Could not unmarshal keybindings.yml: %s", err)
-		}
-
-		break
+		log.Fatalf("Could not unmarshal keybindings.yml: %s", err)
 	}
 }
 

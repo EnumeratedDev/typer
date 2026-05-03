@@ -2,19 +2,25 @@ package main
 
 import (
 	"log"
-	"os"
+
+	flag "github.com/spf13/pflag"
 )
 
 var sysconfdir = "/etc/"
 
+var configDirFlag = flag.StringP("config", "c", "", "Path to config directory")
+
 func main() {
-	// Read config
-	readConfig()
+	// Read flags
+	readFlags()
 
-	// Read key bindings
-	readKeybindings()
+	// Read main config
+	readMainConfig()
 
-	// Read styles
+	// Read keybindings config
+	readKeybindingsConfig()
+
+	// Read styles directory
 	readStyles()
 
 	// Initialize commands
@@ -25,8 +31,8 @@ func main() {
 		log.Fatalf("Failed to create window: %v", err)
 	}
 
-	if len(os.Args) > 1 {
-		for i, file := range os.Args[1:] {
+	if flag.NArg() > 0 {
+		for i, file := range flag.Args() {
 			b, err := CreateFileBuffer(file, true)
 			if err != nil {
 				window.PrintMessage("Could not open file: " + file)
@@ -47,4 +53,8 @@ func main() {
 
 	window.screen.Fini()
 	window.screen = nil
+}
+
+func readFlags() {
+	flag.Parse()
 }

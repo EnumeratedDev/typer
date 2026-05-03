@@ -1,6 +1,54 @@
 package main
 
-import "github.com/gdamore/tcell/v2"
+import (
+	"log"
+	"os"
+	"path"
+	"path/filepath"
+	"runtime"
+
+	"github.com/gdamore/tcell/v2"
+)
+
+func GetConfigPath(relativeConfigPath string) string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("Could not get home directory: %s", err)
+	}
+
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Could not get path to executable: %s", err)
+	}
+
+	paths := make([]string, 0)
+	if *configDirFlag != "" {
+		paths = append(paths, path.Join(*configDirFlag, relativeConfigPath))
+	}
+	switch runtime.GOOS {
+	case "windows":
+		paths = append(paths, filepath.Join(homeDir, "AppData/Roaming/Typer", relativeConfigPath))
+		paths = append(paths, "C:/ProgramData/Typer", relativeConfigPath)
+	case "darwin":
+		paths = append(paths, filepath.Join(homeDir, "Library/Typer", relativeConfigPath))
+		paths = append(paths, filepath.Join(homeDir, "Library/typer", relativeConfigPath))
+		paths = append(paths, filepath.Join(sysconfdir, "Typer", relativeConfigPath))
+		paths = append(paths, filepath.Join(sysconfdir, "typer", relativeConfigPath))
+	default:
+		paths = append(paths, filepath.Join(homeDir, ".config/typer", relativeConfigPath))
+		paths = append(paths, filepath.Join(sysconfdir, "typer", relativeConfigPath))
+	}
+	paths = append(paths, filepath.Join(filepath.Dir(execPath), "config", relativeConfigPath))
+
+	for _, p := range paths {
+		// Return true if path exists
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+
+	return ""
+}
 
 func drawText(s tcell.Screen, x1, y1, x2, y2 int, style tcell.Style, text string) {
 	row := y1

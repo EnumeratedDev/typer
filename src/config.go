@@ -3,8 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
 
 	"gopkg.in/yaml.v3"
 )
@@ -21,7 +19,7 @@ type TyperConfig struct {
 
 var Config TyperConfig
 
-func readConfig() {
+func readMainConfig() {
 	Config = TyperConfig{
 		SelectedStyle:     "default",
 		FallbackStyle:     "default-fallback",
@@ -32,49 +30,24 @@ func readConfig() {
 		TabIndentation:    4,
 	}
 
-	homeDir, err := os.UserHomeDir()
+	// Get main config path
+	mainConfigPath := GetConfigPath("config.yml")
+
+	// Ensure config exists at path
+	if mainConfigPath == "" {
+		log.Fatalf("config.yml not found in any config directory")
+	}
+
+	// Read config file
+	data, err := os.ReadFile(mainConfigPath)
 	if err != nil {
-		log.Fatalf("Could not get home directory: %s", err)
+		log.Fatalf("Could not read config.yml: %s", err)
 	}
 
-	execPath, err := os.Executable()
+	// Unmarshal contents into struct
+	err = yaml.Unmarshal(data, &Config)
 	if err != nil {
-		log.Fatalf("Could not get path to executable: %s", err)
-	}
-
-	configPaths := make([]string, 0)
-	switch runtime.GOOS {
-	case "windows":
-		configPaths = append(configPaths, filepath.Join(homeDir, "AppData/Roaming/Typer/config.yml"))
-		configPaths = append(configPaths, filepath.Join(filepath.Dir(execPath), "etc/typer/config.yml"))
-	case "darwin":
-		configPaths = append(configPaths, filepath.Join(homeDir, "Library/Typer/config.yml"))
-		configPaths = append(configPaths, "/Library/Typer/config.yml")
-		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/config.yml"))
-	default:
-		configPaths = append(configPaths, filepath.Join(homeDir, ".config/typer/config.yml"))
-		configPaths = append(configPaths, filepath.Join(sysconfdir, "typer/config.yml"))
-	}
-
-	for _, configPath := range configPaths {
-		// Ensure config exists at path
-		if _, err := os.Stat(configPath); err != nil {
-			continue
-		}
-
-		// Read config file
-		data, err := os.ReadFile(configPath)
-		if err != nil {
-			log.Fatalf("Could not read config.yml: %s", err)
-		}
-
-		// Unmarshal contents into struct
-		err = yaml.Unmarshal(data, &Config)
-		if err != nil {
-			log.Fatalf("Could not unmarshal config.yml: %s", err)
-		}
-
-		break
+		log.Fatalf("Could not unmarshal config.yml: %s", err)
 	}
 
 	// Validate config options
