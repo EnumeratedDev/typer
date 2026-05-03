@@ -49,6 +49,7 @@ jobs:
           name: build-${{ matrix.os }}-${{ matrix.arch }}
           path: staging/${{ env.FILENAME }}.*
   publish:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
