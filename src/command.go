@@ -473,7 +473,7 @@ func initCommands() {
 		run: func(window *Window, args ...string) {
 			for _, button := range TopMenuButtons {
 				if button.Name == "File" {
-					button.Action(window)
+					button.Action(window, &button)
 					break
 				}
 			}
@@ -485,7 +485,7 @@ func initCommands() {
 		run: func(window *Window, args ...string) {
 			for _, button := range TopMenuButtons {
 				if button.Name == "Edit" {
-					button.Action(window)
+					button.Action(window, &button)
 					break
 				}
 			}
@@ -497,7 +497,7 @@ func initCommands() {
 		run: func(window *Window, args ...string) {
 			for _, button := range TopMenuButtons {
 				if button.Name == "Buffers" {
-					button.Action(window)
+					button.Action(window, &button)
 					break
 				}
 			}

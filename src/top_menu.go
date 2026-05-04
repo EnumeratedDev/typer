@@ -11,7 +11,8 @@ import (
 
 type TopMenuButton struct {
 	Name   string
-	Action func(w *Window)
+	PosX   int
+	Action func(w *Window, b *TopMenuButton)
 }
 
 var TopMenuButtons = make([]TopMenuButton, 0)
@@ -20,7 +21,7 @@ func initTopMenu() {
 	// Buttons
 	fileButton := TopMenuButton{
 		Name: "File",
-		Action: func(window *Window) {
+		Action: func(window *Window, button *TopMenuButton) {
 			ClearDropdowns()
 
 			y := 0
@@ -28,7 +29,7 @@ func initTopMenu() {
 				y++
 			}
 
-			d := CreateDropdownMenu([]string{"New", "Save", "Open", "Close", "Quit"}, 0, y, 0, func(i int) {
+			d := CreateDropdownMenu([]string{"New", "Save", "Open", "Close", "Quit"}, button.PosX, y, 0, func(i int) {
 				switch i {
 				case 0:
 					RunCommand(window, "new-buffer")
@@ -49,7 +50,7 @@ func initTopMenu() {
 	}
 	EditButton := TopMenuButton{
 		Name: "Edit",
-		Action: func(window *Window) {
+		Action: func(window *Window, button *TopMenuButton) {
 			ClearDropdowns()
 
 			y := 0
@@ -57,7 +58,7 @@ func initTopMenu() {
 				y++
 			}
 
-			d := CreateDropdownMenu([]string{"Cut", "Copy", "Paste"}, 0, y, 0, func(i int) {
+			d := CreateDropdownMenu([]string{"Cut", "Copy", "Paste"}, button.PosX, y, 0, func(i int) {
 				switch i {
 				case 0:
 					RunCommand(window, "cut")
@@ -75,7 +76,7 @@ func initTopMenu() {
 	}
 	Buffers := TopMenuButton{
 		Name: "Buffers",
-		Action: func(window *Window) {
+		Action: func(window *Window, button *TopMenuButton) {
 			ClearDropdowns()
 
 			y := 0
@@ -92,7 +93,7 @@ func initTopMenu() {
 				}
 			}
 
-			d := CreateDropdownMenu(buffersSlice, 0, y, 0, func(i int) {
+			d := CreateDropdownMenu(buffersSlice, button.PosX, y, 0, func(i int) {
 				window.CurrentBuffer = Buffers[i]
 				window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'", window.CurrentBuffer.Name), TYPER_MESSAGE_INFO)
 				ClearDropdowns()
@@ -119,8 +120,9 @@ func drawTopMenu(window *Window) {
 	}
 
 	currentX := 1
-	for _, button := range TopMenuButtons {
+	for i, button := range TopMenuButtons {
 		drawText(screen, currentX, 0, currentX+len(button.Name), 0, topMenuStyle, button.Name)
+		TopMenuButtons[i].PosX = currentX
 		currentX += len(button.Name) + 1
 	}
 
