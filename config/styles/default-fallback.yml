@@ -19,3 +19,7 @@ colors:
   message_bar_fg: "black" # Message bar text color
   input_bar_bg: "white" # Input bar background color
   input_bar_fg: "black" # Input bar text color
+  # Typer logs highlighting
+  syntax_info: "green"
+  syntax_warning: "yellow"
+  syntax_error: "red"

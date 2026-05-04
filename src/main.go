@@ -38,7 +38,7 @@ func main() {
 		for i, file := range flag.Args() {
 			b, err := CreateFileBuffer(file, true)
 			if err != nil {
-				window.PrintMessage("Could not open file: " + file)
+				window.PrintMessage("Could not open file: "+file, TYPER_MESSAGE_ERROR)
 				continue
 			}
 
@@ -48,6 +48,14 @@ func main() {
 			}
 		}
 	}
+
+	// Create logs buffer
+	logsBuffer, err := CreateBuffer("Logs")
+	if err != nil {
+		log.Fatalf("Could not create logs buffer")
+	}
+	logsBuffer.filetype = "typer_logs"
+	logsBuffer.canEdit = false
 
 	for !window.closed {
 		window.Draw()

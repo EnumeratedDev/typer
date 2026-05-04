@@ -29,7 +29,7 @@ func initCommands() {
 				selectionEnd:   Position{len(window.CurrentBuffer.Contents) - 1, len(lastLine) - 1},
 			}
 
-			window.PrintMessage("Selected all text.")
+			window.PrintMessage("Selected all text", TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -44,9 +44,9 @@ func initCommands() {
 
 			// Send appropriate message and remove text depending on copying method
 			if copyingMethod == 0 {
-				window.PrintMessage("Copied line to clipboard.")
+				window.PrintMessage("Copied line to clipboard", TYPER_MESSAGE_INFO)
 			} else {
-				window.PrintMessage("Copied selection to clipboard.")
+				window.PrintMessage("Copied selection to clipboard", TYPER_MESSAGE_INFO)
 			}
 		},
 	}
@@ -62,9 +62,9 @@ func initCommands() {
 
 			// Send appropriate message depending on copying method
 			if copyingMethod == 0 {
-				window.PrintMessage("Copied line to clipboard.")
+				window.PrintMessage("Copied line to clipboard", TYPER_MESSAGE_INFO)
 			} else {
-				window.PrintMessage("Copied selection to clipboard. ")
+				window.PrintMessage("Copied selection to clipboard", TYPER_MESSAGE_INFO)
 			}
 		},
 	}
@@ -72,9 +72,14 @@ func initCommands() {
 	pasteCmd := Command{
 		cmd: "paste",
 		run: func(window *Window, args ...string) {
+			if !window.CurrentBuffer.canEdit {
+				window.PrintMessage(fmt.Sprintf("Buffer '%s' is read-only", window.CurrentBuffer.Name), TYPER_MESSAGE_WARNING)
+				return
+			}
+
 			if len(window.Clipboard) != 0 {
 				window.CurrentBuffer.PasteText(window, window.Clipboard)
-				window.PrintMessage("Pasted text to buffer. ")
+				window.PrintMessage("Pasted text to buffer", TYPER_MESSAGE_INFO)
 			}
 		},
 	}
@@ -83,7 +88,7 @@ func initCommands() {
 		cmd: "save",
 		run: func(window *Window, args ...string) {
 			if !window.CurrentBuffer.canSave {
-				window.PrintMessage("Cannot save buffer!")
+				window.PrintMessage("Cannot save buffer", TYPER_MESSAGE_ERROR)
 				return
 			}
 
@@ -100,7 +105,7 @@ func initCommands() {
 				input = <-inputChannel
 
 				if strings.TrimSpace(input) == "" {
-					window.PrintMessage("No save location was given!")
+					window.PrintMessage("No save location was given", TYPER_MESSAGE_ERROR)
 					return
 				}
 
@@ -108,12 +113,12 @@ func initCommands() {
 				err := window.CurrentBuffer.Save()
 				if err != nil {
 
-					window.PrintMessage(fmt.Sprintf("Could not save file: %s", err))
+					window.PrintMessage(fmt.Sprintf("Could not save file: %s", err), TYPER_MESSAGE_ERROR)
 					window.CurrentBuffer.filename = ""
 					return
 				}
 
-				window.PrintMessage("File saved.")
+				window.PrintMessage("File saved", TYPER_MESSAGE_INFO)
 			}()
 		},
 		autocomplete: func(window *Window, args ...string) []string {
@@ -133,16 +138,16 @@ func initCommands() {
 				}
 
 				if openBuffer := GetOpenFileBuffer(input); openBuffer != nil {
-					window.PrintMessage(fmt.Sprintf("File already open! Switching to buffer: %s", openBuffer.Name))
+					window.PrintMessage(fmt.Sprintf("File already open! Switching to buffer: %s", openBuffer.Name), TYPER_MESSAGE_INFO)
 					window.CurrentBuffer = openBuffer
 				} else {
 					newBuffer, err := CreateFileBuffer(input, false)
 					if err != nil {
-						window.PrintMessage(fmt.Sprintf("Could not open file: %s", err.Error()))
+						window.PrintMessage(fmt.Sprintf("Could not open file: %s", err.Error()), TYPER_MESSAGE_WARNING)
 						return
 					}
 
-					window.PrintMessage(fmt.Sprintf("Opening file at: %s", newBuffer.filename))
+					window.PrintMessage(fmt.Sprintf("Opening file at: %s", newBuffer.filename), TYPER_MESSAGE_INFO)
 					window.CurrentBuffer = newBuffer
 				}
 			}()
@@ -157,7 +162,7 @@ func initCommands() {
 				log.Fatalf("Could not reload buffer: %s", err)
 			}
 
-			window.PrintMessage("Buffer reloaded.")
+			window.PrintMessage("Buffer reloaded", TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -174,9 +179,9 @@ func initCommands() {
 				pos := window.CurrentBuffer.FindSubstring(input, window.CurrentBuffer.CursorPos)
 				if pos.X >= 0 && pos.Y >= 0 {
 					window.CurrentBuffer.CursorPos = pos
-					window.PrintMessage("Match found.")
+					window.PrintMessage("Match found", TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(input)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(input)), TYPER_MESSAGE_WARNING)
 				}
 
 				return
@@ -193,9 +198,9 @@ func initCommands() {
 				pos := window.CurrentBuffer.FindSubstring(input, window.CurrentBuffer.CursorPos)
 				if pos.X >= 0 && pos.Y >= 0 {
 					window.CurrentBuffer.CursorPos = pos
-					window.PrintMessage("Match found.")
+					window.PrintMessage("Match found", TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(input)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(input)), TYPER_MESSAGE_WARNING)
 				}
 			}()
 		},
@@ -215,9 +220,9 @@ func initCommands() {
 				pos := window.CurrentBuffer.FindAndReplaceSubstring(findStr, replaceStr, window.CurrentBuffer.CursorPos)
 				if pos.X >= 0 && pos.Y >= 0 {
 					window.CurrentBuffer.CursorPos = pos
-					window.PrintMessage("Match replaced successfully.")
+					window.PrintMessage("Match replaced successfully", TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(findStr)), TYPER_MESSAGE_WARNING)
 				}
 
 				return
@@ -236,9 +241,9 @@ func initCommands() {
 				pos := window.CurrentBuffer.FindAndReplaceSubstring(findStr, replaceStr, window.CurrentBuffer.CursorPos)
 				if pos.X >= 0 && pos.Y >= 0 {
 					window.CurrentBuffer.CursorPos = pos
-					window.PrintMessage("Match replaced successfully.")
+					window.PrintMessage("Match replaced successfully", TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(findStr)), TYPER_MESSAGE_WARNING)
 				}
 			}()
 		},
@@ -257,9 +262,9 @@ func initCommands() {
 
 				replacements := window.CurrentBuffer.FindAndReplaceAll(findStr, replaceStr)
 				if replacements > 0 {
-					window.PrintMessage(fmt.Sprintf("Replaced all %d matches successfully.", replacements))
+					window.PrintMessage(fmt.Sprintf("Replaced all %d matches successfully", replacements), TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(findStr)), TYPER_MESSAGE_WARNING)
 				}
 
 				return
@@ -277,9 +282,9 @@ func initCommands() {
 
 				replacements := window.CurrentBuffer.FindAndReplaceAll(findStr, replaceStr)
 				if replacements > 0 {
-					window.PrintMessage(fmt.Sprintf("Replaced all %d matches successfully.", replacements))
+					window.PrintMessage(fmt.Sprintf("Replaced all %d matches successfully", replacements), TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer!", string(findStr)))
+					window.PrintMessage(fmt.Sprintf("'%s' not found in buffer", string(findStr)), TYPER_MESSAGE_WARNING)
 				}
 			}()
 		},
@@ -300,7 +305,7 @@ func initCommands() {
 			}
 
 			window.CurrentBuffer = Buffers[index]
-			window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'.", window.CurrentBuffer.Name))
+			window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'", window.CurrentBuffer.Name), TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -319,7 +324,7 @@ func initCommands() {
 			}
 
 			window.CurrentBuffer = Buffers[index]
-			window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'.", window.CurrentBuffer.Name))
+			window.PrintMessage(fmt.Sprintf("Set current buffer to '%s'", window.CurrentBuffer.Name), TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -335,7 +340,7 @@ func initCommands() {
 			}
 
 			window.CursorMode = CursorModeBuffer
-			window.PrintMessage(fmt.Sprintf("New buffer created with the name '%s'.", window.CurrentBuffer.Name))
+			window.PrintMessage(fmt.Sprintf("New buffer created with the name '%s'", window.CurrentBuffer.Name), TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -354,7 +359,7 @@ func initCommands() {
 				window.CurrentBuffer = Buffers[bufferIndex]
 			}
 			window.CursorMode = CursorModeBuffer
-			window.PrintMessage("Buffer closed.")
+			window.PrintMessage("Buffer closed", TYPER_MESSAGE_INFO)
 		},
 	}
 
@@ -383,14 +388,14 @@ func initCommands() {
 				}
 
 				if _, ok := AvailableStyles[input]; !ok {
-					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input), TYPER_MESSAGE_ERROR)
 					return
 				}
 
 				if ok := SetCurrentStyle(window.screen, input); ok {
-					window.PrintMessage(fmt.Sprintf("Setting style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Setting style to '%s'", input), TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input), TYPER_MESSAGE_ERROR)
 				}
 
 				return
@@ -405,14 +410,14 @@ func initCommands() {
 				}
 
 				if _, ok := AvailableStyles[input]; !ok {
-					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input), TYPER_MESSAGE_ERROR)
 					return
 				}
 
 				if ok := SetCurrentStyle(window.screen, input); ok {
-					window.PrintMessage(fmt.Sprintf("Setting style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Setting style to '%s'", input), TYPER_MESSAGE_INFO)
 				} else {
-					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set style to '%s'", input), TYPER_MESSAGE_ERROR)
 				}
 			}()
 		},
@@ -430,15 +435,15 @@ func initCommands() {
 
 				if strings.ToLower(input) == "none" {
 					window.CurrentBuffer.filetype = ""
-					window.PrintMessage("Setting filetype to 'none'")
+					window.PrintMessage("Setting filetype to 'none'", TYPER_MESSAGE_INFO)
 					return
 				} else if _, ok := AvailableSyntaxes[input]; !ok {
-					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input), TYPER_MESSAGE_ERROR)
 					return
 				}
 
 				window.CurrentBuffer.filetype = input
-				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input))
+				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input), TYPER_MESSAGE_INFO)
 
 				return
 			}
@@ -452,12 +457,12 @@ func initCommands() {
 				}
 
 				if _, ok := AvailableSyntaxes[input]; !ok {
-					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input))
+					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input), TYPER_MESSAGE_ERROR)
 					return
 				}
 
 				window.CurrentBuffer.filetype = input
-				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input))
+				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input), TYPER_MESSAGE_INFO)
 
 			}()
 		},
@@ -579,7 +584,7 @@ func RunCommand(window *Window, cmd string, args ...string) bool {
 		command.run(window, args...)
 		return true
 	} else {
-		window.PrintMessage(fmt.Sprintf("Could not find command '%s'!", cmd))
+		window.PrintMessage(fmt.Sprintf("Could not find command '%s'", cmd), TYPER_MESSAGE_ERROR)
 		return false
 	}
 }

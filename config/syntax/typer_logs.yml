@@ -1,0 +1,12 @@
+filetype: typer_logs
+
+rules:
+  - type: info
+    regex: '^\[INFO\].*$'
+    multiline: true
+  - type: warning
+    regex: '^\[WARNING\].*$'
+    multiline: true
+  - type: error
+    regex: '^\[ERROR\].*$'
+    multiline: true

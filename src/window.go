@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"slices"
 	"strconv"
@@ -86,7 +87,7 @@ func CreateWindow() (*Window, error) {
 		if ok := SetCurrentStyle(screen, Config.FallbackStyle); !ok {
 			// Use hard-coded fallback style
 			screen.SetStyle(tcell.StyleDefault.Foreground(CurrentStyle.BufferAreaFg).Background(CurrentStyle.BufferAreaBg))
-			window.PrintMessage("Could not set style either to selected one nor to fallback one!")
+			window.PrintMessage("Could not set style either to selected one nor to fallback one", TYPER_MESSAGE_ERROR)
 		}
 	}
 
@@ -396,6 +397,11 @@ func (window *Window) handleKeyInput(ev *tcell.EventKey) {
 	// Typing
 	if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
 		if window.CursorMode == CursorModeBuffer {
+			if !window.CurrentBuffer.canEdit {
+				window.PrintMessage(fmt.Sprintf("Buffer '%s' is read-only", window.CurrentBuffer.Name), TYPER_MESSAGE_WARNING)
+				return
+			}
+
 			if window.CurrentBuffer.Selection != nil {
 				window.CurrentBuffer.CutText(window)
 			} else {
@@ -413,6 +419,11 @@ func (window *Window) handleKeyInput(ev *tcell.EventKey) {
 		}
 	} else if ev.Key() == tcell.KeyTab {
 		if window.CursorMode == CursorModeBuffer {
+			if !window.CurrentBuffer.canEdit {
+				window.PrintMessage(fmt.Sprintf("Buffer '%s' is read-only", window.CurrentBuffer.Name), TYPER_MESSAGE_WARNING)
+				return
+			}
+
 			// Remove selected text
 			if window.CurrentBuffer.Selection != nil {
 				window.CurrentBuffer.CutText(window)
@@ -422,6 +433,11 @@ func (window *Window) handleKeyInput(ev *tcell.EventKey) {
 		}
 	} else if ev.Key() == tcell.KeyEnter {
 		if window.CursorMode == CursorModeBuffer {
+			if !window.CurrentBuffer.canEdit {
+				window.PrintMessage(fmt.Sprintf("Buffer '%s' is read-only", window.CurrentBuffer.Name), TYPER_MESSAGE_WARNING)
+				return
+			}
+
 			// Remove selected text
 			if window.CurrentBuffer.Selection != nil {
 				window.CurrentBuffer.CutText(window)
@@ -441,6 +457,11 @@ func (window *Window) handleKeyInput(ev *tcell.EventKey) {
 		}
 	} else if ev.Key() == tcell.KeyRune {
 		if window.CursorMode == CursorModeBuffer {
+			if !window.CurrentBuffer.canEdit {
+				window.PrintMessage(fmt.Sprintf("Buffer '%s' is read-only", window.CurrentBuffer.Name), TYPER_MESSAGE_WARNING)
+				return
+			}
+
 			// Remove selected text
 			if window.CurrentBuffer.Selection != nil {
 				window.CurrentBuffer.CutText(window)

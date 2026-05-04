@@ -43,6 +43,10 @@ type TyperStyle struct {
 	SyntaxConstant   tcell.Color `name:"syntax_constant"`
 	SyntaxVariable   tcell.Color `name:"syntax_variable"`
 	SyntaxString     tcell.Color `name:"syntax_string"`
+	// Typer logs highlighting
+	SyntaxInfo    tcell.Color `name:"syntax_info"`
+	SyntaxWarning tcell.Color `name:"syntax_warning"`
+	SyntaxError   tcell.Color `name:"syntax_error"`
 }
 
 type typerStyleYaml struct {

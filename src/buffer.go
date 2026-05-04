@@ -22,6 +22,7 @@ type Buffer struct {
 	Selection *Selection
 
 	canSave  bool
+	canEdit  bool
 	filetype string
 	filename string
 }
@@ -59,7 +60,7 @@ func drawBuffer(window *Window) {
 
 	parsedSyntaxes, err := HighlightString(string(buffer.GetContentsAsString()), buffer.filetype)
 	if err != nil {
-		window.PrintMessage(fmt.Sprintf("Could not parse regular expression in '%s' syntax: %s", buffer.filetype, err))
+		window.PrintMessage(fmt.Sprintf("Could not parse regular expression in '%s' syntax: %s", buffer.filetype, err), TYPER_MESSAGE_ERROR)
 	}
 
 	i := -1
@@ -88,6 +89,14 @@ func drawBuffer(window *Window) {
 							style = style.Foreground(CurrentStyle.SyntaxVariable)
 						case "string":
 							style = style.Foreground(CurrentStyle.SyntaxString)
+
+						// Special types for typer logs
+						case "info":
+							style = style.Foreground(CurrentStyle.SyntaxInfo)
+						case "warning":
+							style = style.Foreground(CurrentStyle.SyntaxWarning)
+						case "error":
+							style = style.Foreground(CurrentStyle.SyntaxError)
 						}
 
 						break
@@ -168,6 +177,10 @@ func (buffer *Buffer) Load() error {
 
 	// Set buffer filetype
 	for _, syntax := range AvailableSyntaxes {
+		if syntax.Filenames == "" {
+			continue
+		}
+
 		if ok, _ := regexp.MatchString(syntax.Filenames, buffer.filename); ok {
 			buffer.filetype = syntax.Filetype
 		}
@@ -641,6 +654,7 @@ func CreateFileBuffer(filename string, openNonExistentFile bool) (*Buffer, error
 		Contents:  make([]runestring.RuneString, 1),
 		CursorPos: Position{0, 0},
 		canSave:   true,
+		canEdit:   true,
 		filename:  abs,
 	}
 
@@ -664,6 +678,7 @@ func CreateBuffer(bufferName string) (*Buffer, error) {
 		Contents:  make([]runestring.RuneString, 1),
 		CursorPos: Position{0, 0},
 		canSave:   true,
+		canEdit:   true,
 		filename:  "",
 	}
 

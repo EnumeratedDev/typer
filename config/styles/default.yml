@@ -28,3 +28,7 @@ colors:
   syntax_constant: "teal"
   syntax_variable: "purple"
   syntax_string: "blue"
+  # Typer logs highlighting
+  syntax_info: "green"
+  syntax_warning: "yellow"
+  syntax_error: "red"

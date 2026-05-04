@@ -1,20 +1,60 @@
 package main
 
 import (
+	"slices"
 	"time"
+	"typer/runestring"
 
 	"github.com/gdamore/tcell/v2"
 )
 
+type TyperMessageUrgency uint
+
+const (
+	TYPER_MESSAGE_INFO TyperMessageUrgency = iota
+	TYPER_MESSAGE_WARNING
+	TYPER_MESSAGE_ERROR
+)
+
 type TyperMessage struct {
-	timestamp int64
-	message   string
+	Timestamp int64
+	Urgency   TyperMessageUrgency
+	Message   string
 }
 
-var messageLog = make([]TyperMessage, 0)
+var lastMessage *TyperMessage
 
-func (window *Window) PrintMessage(message string) {
-	messageLog = append(messageLog, TyperMessage{timestamp: time.Now().UnixMilli(), message: message})
+func (window *Window) PrintMessage(message string, urgency TyperMessageUrgency) {
+	lastMessage = &TyperMessage{Timestamp: time.Now().UnixMilli(), Message: message, Urgency: urgency}
+
+	logsBuffer := GetBufferByName("Logs")
+	if logsBuffer != nil {
+		messageToPrint := ""
+		switch lastMessage.Urgency {
+		case TYPER_MESSAGE_INFO:
+			messageToPrint = "[INFO] "
+		case TYPER_MESSAGE_WARNING:
+			messageToPrint = "[WARNING] "
+		case TYPER_MESSAGE_ERROR:
+			messageToPrint = "[ERROR] "
+		default:
+			messageToPrint = "[???] "
+		}
+
+		messageToPrint += "[" + time.UnixMilli(lastMessage.Timestamp).Format("15:04:05") + "] "
+		messageToPrint += lastMessage.Message + "\n"
+
+		if len(logsBuffer.Contents) >= 1000 {
+			logsBuffer.Contents = slices.Delete(logsBuffer.Contents, 0, len(logsBuffer.Contents)-999)
+		}
+
+		logsBuffer.CursorPos = Position{
+			X: len(logsBuffer.Contents[len(logsBuffer.Contents)-1]),
+			Y: len(logsBuffer.Contents) - 1,
+		}
+
+		logsBuffer.WriteString(runestring.RuneString(messageToPrint))
+	}
 
 	err := window.screen.PostEvent(tcell.NewEventInterrupt(nil))
 	if err != nil {
@@ -39,8 +79,18 @@ func drawMessageBar(window *Window) {
 	sizeX, sizeY := screen.Size()
 
 	messageToPrint := ""
-	if len(messageLog) > 0 && time.Since(time.UnixMilli(messageLog[len(messageLog)-1].timestamp)).Seconds() < 5 {
-		messageToPrint = messageLog[len(messageLog)-1].message
+	if lastMessage != nil && time.Since(time.UnixMilli(lastMessage.Timestamp)).Seconds() < 5 {
+		switch lastMessage.Urgency {
+		case TYPER_MESSAGE_INFO:
+			messageToPrint = "[INFO] "
+		case TYPER_MESSAGE_WARNING:
+			messageToPrint = "[WARNING] "
+		case TYPER_MESSAGE_ERROR:
+			messageToPrint = "[ERROR] "
+		default:
+			messageToPrint = "[???] "
+		}
+		messageToPrint += lastMessage.Message
 	}
 
 	for x := 0; x < sizeX; x++ {
