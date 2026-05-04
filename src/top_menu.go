@@ -134,11 +134,16 @@ func drawTopMenu(window *Window) {
 func getBufferInfoMsg(window *Window) string {
 	pathToFile := "Not set"
 	filename := "Not set"
+	filetype := "Not set"
 	if window.CurrentBuffer.filename != "" {
 		pathToFile = window.CurrentBuffer.filename
 	}
 	if filepath.Base(window.CurrentBuffer.filename) != "." {
 		filename = filepath.Base(window.CurrentBuffer.filename)
+	}
+
+	if window.CurrentBuffer.filetype != "" {
+		filetype = window.CurrentBuffer.filetype
 	}
 
 	contents := window.CurrentBuffer.GetContentsAsString()
@@ -150,6 +155,7 @@ func getBufferInfoMsg(window *Window) string {
 	ret = strings.ReplaceAll(ret, "\n", " ")
 	ret = strings.ReplaceAll(ret, "%F", pathToFile)
 	ret = strings.ReplaceAll(ret, "%f", filename)
+	ret = strings.ReplaceAll(ret, "%t", filetype)
 	ret = strings.ReplaceAll(ret, "%x", strconv.Itoa(window.CurrentBuffer.CursorPos.X+1))
 	ret = strings.ReplaceAll(ret, "%y", strconv.Itoa(window.CurrentBuffer.CursorPos.Y+1))
 	ret = strings.ReplaceAll(ret, "%p", strconv.Itoa(window.CurrentBuffer.PositionToAbsolutePosition(window.CurrentBuffer.CursorPos)+1))

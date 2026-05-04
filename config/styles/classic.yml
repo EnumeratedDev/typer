@@ -19,3 +19,11 @@ colors:
   message_bar_fg: "black" # Message bar text color
   input_bar_bg: "245" # Input bar background color
   input_bar_fg: "black" # Input bar text color
+
+  # Syntax highlighting
+  syntax_comment: "darkgray"
+  syntax_keyword: "lightgreen"
+  syntax_identifier: "yellow"
+  syntax_constant: "purple"
+  syntax_variable: "yellow"
+  syntax_string: "purple"

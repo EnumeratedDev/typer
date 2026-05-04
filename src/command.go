@@ -418,6 +418,51 @@ func initCommands() {
 		},
 	}
 
+	setFiletypeCmd := Command{
+		cmd: "set-filetype",
+		run: func(window *Window, args ...string) {
+			if len(args) >= 1 {
+				input := args[0]
+
+				if input == "" {
+					return
+				}
+
+				if strings.ToLower(input) == "none" {
+					window.CurrentBuffer.filetype = ""
+					window.PrintMessage("Setting filetype to 'none'")
+					return
+				} else if _, ok := AvailableSyntaxes[input]; !ok {
+					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input))
+					return
+				}
+
+				window.CurrentBuffer.filetype = input
+				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input))
+
+				return
+			}
+
+			inputChannel := RequestInput(window, "Filetype to switch to:", "")
+			go func() {
+				input := <-inputChannel
+
+				if input == "" {
+					return
+				}
+
+				if _, ok := AvailableSyntaxes[input]; !ok {
+					window.PrintMessage(fmt.Sprintf("Could not set filetype to '%s'", input))
+					return
+				}
+
+				window.CurrentBuffer.filetype = input
+				window.PrintMessage(fmt.Sprintf("Setting filetype to '%s'", input))
+
+			}()
+		},
+	}
+
 	menuFileCmd := Command{
 		cmd: "menu-file",
 		run: func(window *Window, args ...string) {
@@ -521,6 +566,7 @@ func initCommands() {
 	commands["toggle-top-bar"] = &toggleTopBar
 	commands["toggle-line-index"] = &toggleLineIndex
 	commands["set-style"] = &setStyleCmd
+	commands["set-filetype"] = &setFiletypeCmd
 	commands["menu-file"] = &menuFileCmd
 	commands["menu-edit"] = &menuEditCmd
 	commands["menu-buffers"] = &menuBuffersCmd

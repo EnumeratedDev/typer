@@ -23,6 +23,9 @@ func main() {
 	// Read styles directory
 	readStyles()
 
+	// Read syntax directory
+	ReadSyntaxHighlighters()
+
 	// Initialize commands
 	initCommands()
 

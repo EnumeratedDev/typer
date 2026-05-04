@@ -1,0 +1,15 @@
+filetype: yaml
+filenames: ".y[a]?ml$"
+
+rules:
+  - type: string # Strings
+    regex: '(["''])(.*?)(["''])'
+  - type: comment
+    regex: "#.*"
+  - type: identifier # Keys
+    regex: '^[[:blank:]]*(-.)?([a-z0-9\._\-])+:'
+    multiline: true
+  - type: constant # Number values
+    regex: '\d+(\.\d+)?'
+  - type: constant # True/false values
+    regex: '\b(YES|yes|Y|y|ON|on|TRUE|True|true|NO|no|N|n|OFF|off|FALSE|False|false)\b'

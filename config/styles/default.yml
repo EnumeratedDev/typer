@@ -5,6 +5,7 @@ style_type: "256-color"
 
 # Colors
 colors:
+  # Main colors
   buffer_area_bg: "234" # Buffer area background color
   buffer_area_fg: "white" # Buffer area text color
   buffer_area_sel: "243" # Buffer area selected text and cursor background color
@@ -19,3 +20,11 @@ colors:
   message_bar_fg: "white" # Message bar text color
   input_bar_bg: "236" # Input bar background color
   input_bar_fg: "white" # Input bar text color
+
+  # Syntax highlighting
+  syntax_comment: "gray"
+  syntax_keyword: "gold"
+  syntax_identifier: "purple"
+  syntax_constant: "teal"
+  syntax_variable: "purple"
+  syntax_string: "blue"

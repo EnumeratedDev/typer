@@ -20,7 +20,7 @@ type TyperStyle struct {
 	Description string
 	StyleType   string
 
-	// Colors
+	// Main Colors
 	BufferAreaBg  tcell.Color `name:"buffer_area_bg"`
 	BufferAreaFg  tcell.Color `name:"buffer_area_fg"`
 	BufferAreaSel tcell.Color `name:"buffer_area_sel"`
@@ -35,6 +35,14 @@ type TyperStyle struct {
 	MessageBarFg  tcell.Color `name:"message_bar_fg"`
 	InputBarBg    tcell.Color `name:"input_bar_bg"`
 	InputBarFg    tcell.Color `name:"input_bar_fg"`
+
+	// Syntax highlighting
+	SyntaxComment    tcell.Color `name:"syntax_comment"`
+	SyntaxKeyword    tcell.Color `name:"syntax_keyword"`
+	SyntaxIdentifier tcell.Color `name:"syntax_identifier"`
+	SyntaxConstant   tcell.Color `name:"syntax_constant"`
+	SyntaxVariable   tcell.Color `name:"syntax_variable"`
+	SyntaxString     tcell.Color `name:"syntax_string"`
 }
 
 type typerStyleYaml struct {

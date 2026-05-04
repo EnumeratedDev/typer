@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"typer/runestring"
@@ -21,6 +22,7 @@ type Buffer struct {
 	Selection *Selection
 
 	canSave  bool
+	filetype string
 	filename string
 }
 
@@ -55,13 +57,42 @@ func drawBuffer(window *Window) {
 
 	bufferX, bufferY, _, _ := window.GetTextAreaDimensions()
 
+	parsedSyntaxes, err := HighlightString(string(buffer.GetContentsAsString()), buffer.filetype)
+	if err != nil {
+		window.PrintMessage(fmt.Sprintf("Could not parse regular expression in '%s' syntax: %s", buffer.filetype, err))
+	}
+
+	i := -1
 	for lineIndex, line := range buffer.Contents {
 		for runeIndex, r := range append(line, ' ') {
+			i++
 			drawPosition := Position{runeIndex, lineIndex}
 
 			if x-buffer.Offset.X >= bufferX && y-buffer.Offset.Y >= bufferY {
 				// Default style
 				style := tcell.StyleDefault.Background(CurrentStyle.BufferAreaBg).Foreground(CurrentStyle.BufferAreaFg)
+
+				// Check for syntax highlighting
+				for _, parsedSyntax := range parsedSyntaxes {
+					if i >= parsedSyntax.StartIndex && i < parsedSyntax.EndIndex {
+						switch parsedSyntax.Type {
+						case "comment":
+							style = style.Foreground(CurrentStyle.SyntaxComment)
+						case "keyword":
+							style = style.Foreground(CurrentStyle.SyntaxKeyword)
+						case "identifier":
+							style = style.Foreground(CurrentStyle.SyntaxIdentifier)
+						case "constant":
+							style = style.Foreground(CurrentStyle.SyntaxConstant)
+						case "variable":
+							style = style.Foreground(CurrentStyle.SyntaxVariable)
+						case "string":
+							style = style.Foreground(CurrentStyle.SyntaxString)
+						}
+
+						break
+					}
+				}
 
 				// Change background if under cursor
 				if buffer.CursorPos.Equals(runeIndex, lineIndex) {
@@ -133,6 +164,13 @@ func (buffer *Buffer) Load() error {
 
 		buffer.CursorPos.Y = len(buffer.Contents) - 1
 		buffer.CursorPos.X = len(buffer.Contents[buffer.CursorPos.Y])
+	}
+
+	// Set buffer filetype
+	for _, syntax := range AvailableSyntaxes {
+		if ok, _ := regexp.MatchString(syntax.Filenames, buffer.filename); ok {
+			buffer.filetype = syntax.Filetype
+		}
 	}
 
 	return nil
