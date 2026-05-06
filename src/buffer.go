@@ -361,21 +361,13 @@ func (buffer *Buffer) CopyText() (runestring.RuneString, int) {
 }
 
 func (buffer *Buffer) PasteText(window *Window, text runestring.RuneString) {
-	contents := buffer.GetContentsAsString()
-
 	// Remove selected text
 	if buffer.Selection != nil {
-		edge1, edge2 := buffer.GetSelectionEdges()
-		absEdge1 := buffer.PositionToAbsolutePosition(edge1)
-		absEdge2 := buffer.PositionToAbsolutePosition(edge2)
+		_, edge2 := buffer.GetSelectionEdges()
 
-		if absEdge2 == len(buffer.Contents) {
-			absEdge2 = len(buffer.Contents) - 1
-		}
+		buffer.CursorPos = edge2
+		buffer.Delete(len(buffer.GetSelectedText()))
 
-		contents = slices.Delete(contents, absEdge1, absEdge2+1)
-		buffer.Contents = runestring.Split(contents, '\n')
-		buffer.CursorPos = buffer.AbsolutePositionToPosition(absEdge1)
 		buffer.Selection = nil
 	}
 
