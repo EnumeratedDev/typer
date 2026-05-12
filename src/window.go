@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 	"typer/runestring"
@@ -55,14 +54,6 @@ func CreateWindow() (*Window, error) {
 		CurrentBuffer: nil,
 
 		screen: nil,
-	}
-
-	// Create empty buffer if nil
-	for i := 1; window.CurrentBuffer == nil; i++ {
-		buffer, err := CreateBuffer("New Buffer " + strconv.Itoa(i))
-		if err == nil {
-			window.CurrentBuffer = buffer
-		}
 	}
 
 	// Create tcell screen

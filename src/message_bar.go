@@ -27,7 +27,7 @@ var lastMessage *TyperMessage
 func (window *Window) PrintMessage(message string, urgency TyperMessageUrgency) {
 	lastMessage = &TyperMessage{Timestamp: time.Now().UnixMilli(), Message: message, Urgency: urgency}
 
-	logsBuffer := GetBufferByName("Logs")
+	logsBuffer := GetBufferByName("Typer Logs")
 	if logsBuffer != nil {
 		messageToPrint := ""
 		switch lastMessage.Urgency {

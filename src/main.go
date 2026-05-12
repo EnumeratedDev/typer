@@ -34,28 +34,33 @@ func main() {
 		log.Fatalf("Failed to create window: %v", err)
 	}
 
-	if flag.NArg() > 0 {
-		for i, file := range flag.Args() {
-			b, err := CreateFileBuffer(file, true)
-			if err != nil {
-				window.PrintMessage("Could not open file: "+file, TYPER_MESSAGE_ERROR)
-				continue
-			}
-
-			if i == 0 {
-				window.CurrentBuffer = b
-				Buffers = Buffers[1:]
-			}
-		}
-	}
-
 	// Create logs buffer
-	logsBuffer, err := CreateBuffer("Logs")
+	logsBuffer, err := CreateBuffer("Typer Logs")
 	if err != nil {
 		log.Fatalf("Could not create logs buffer")
 	}
 	logsBuffer.filetype = "typer_logs"
 	logsBuffer.canEdit = false
+
+	// Open paths passed as arguments
+	if flag.NArg() > 0 {
+		for _, file := range flag.Args() {
+			buffer, err := CreateFileBuffer(file, true)
+			if err != nil {
+				window.PrintMessage("Could not open file: "+file, TYPER_MESSAGE_ERROR)
+				continue
+			}
+
+			if window.CurrentBuffer == nil {
+				window.CurrentBuffer = buffer
+			}
+		}
+	} else {
+		buffer, err := CreateBuffer("New Buffer 1")
+		if err == nil {
+			window.CurrentBuffer = buffer
+		}
+	}
 
 	for !window.closed {
 		window.Draw()
