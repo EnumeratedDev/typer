@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 
@@ -23,7 +22,7 @@ func GetConfigPath(relativeConfigPath string) string {
 
 	paths := make([]string, 0)
 	if *configDirFlag != "" {
-		paths = append(paths, path.Join(*configDirFlag, relativeConfigPath))
+		paths = append(paths, filepath.Join(*configDirFlag, relativeConfigPath))
 	}
 	switch runtime.GOOS {
 	case "windows":
