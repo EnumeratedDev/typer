@@ -6,5 +6,6 @@ selected_style_fallback: "default-fallback" # Style for 8-color capable terminal
 show_top_menu: true
 show_line_index: true
 extend_line_index: false # Extend line index to the bottom of the screen
+color_message_bar: true # Add color to message bar messages
 buffer_info_message: "File: %f, Filetype: %t, Cursor: (%x, %y, %p), Chars: %c"
 tab_indentation: 4 # Length of tab characters

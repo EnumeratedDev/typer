@@ -82,10 +82,19 @@ func drawMessageBar(window *Window) {
 	if lastMessage != nil && time.Since(time.UnixMilli(lastMessage.Timestamp)).Seconds() < 5 {
 		switch lastMessage.Urgency {
 		case TYPER_MESSAGE_INFO:
+			if Config.ColorMessageBar {
+				messageBarStyle = messageBarStyle.Foreground(CurrentStyle.SyntaxInfo)
+			}
 			messageToPrint = "[INFO] "
 		case TYPER_MESSAGE_WARNING:
+			if Config.ColorMessageBar {
+				messageBarStyle = messageBarStyle.Foreground(CurrentStyle.SyntaxWarning)
+			}
 			messageToPrint = "[WARNING] "
 		case TYPER_MESSAGE_ERROR:
+			if Config.ColorMessageBar {
+				messageBarStyle = messageBarStyle.Foreground(CurrentStyle.SyntaxError)
+			}
 			messageToPrint = "[ERROR] "
 		default:
 			messageToPrint = "[???] "
