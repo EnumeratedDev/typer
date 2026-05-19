@@ -85,9 +85,11 @@ func initTopMenu() {
 			}
 
 			buffersSlice := make([]string, 0)
+			selected := 0
 			for i, buffer := range Buffers {
 				if window.CurrentBuffer == buffer {
 					buffersSlice = append(buffersSlice, fmt.Sprintf("[%d] * %s", i+1, buffer.Name))
+					selected = i
 				} else {
 					buffersSlice = append(buffersSlice, fmt.Sprintf("[%d] %s", i+1, buffer.Name))
 				}
@@ -99,6 +101,7 @@ func initTopMenu() {
 				ClearDropdowns()
 				window.CursorMode = CursorModeBuffer
 			})
+			d.Selected = selected
 			ActiveDropdown = d
 			window.CursorMode = CursorModeDropdown
 		},
