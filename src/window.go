@@ -482,9 +482,40 @@ func (window *Window) handleMouseInput(ev *tcell.EventMouse) {
 	if ev.Buttons() == tcell.Button1 {
 		// Get last click time
 		lastClickTime := time.UnixMilli(lastClick)
-		// Ensure click was in buffer area
+
 		x1, y1, x2, y2 := window.GetTextAreaDimensions()
-		if mouseX >= x1 && mouseY >= y1 && mouseX <= x2 && mouseY <= y2 {
+
+		if mouseY == 0 && Config.ShowTopMenu && !mouseHeld {
+			// Mouse is in top menu
+
+			// Find clicked button
+			buttonFound := false
+			for _, button := range TopMenuButtons {
+				if mouseX >= button.PosX && mouseX <= button.PosX+len(button.Name) {
+					buttonFound = true
+					button.Action(window, &button)
+				}
+			}
+
+			if !buttonFound {
+				// Exit top menu
+				ClearDropdowns()
+				window.CursorMode = CursorModeBuffer
+			}
+		} else if window.CursorMode == CursorModeDropdown && !mouseHeld {
+			// Mouse is in top menu
+
+			if mouseX >= ActiveDropdown.PosX && mouseX <= ActiveDropdown.PosX+ActiveDropdown.Width+1 && mouseY > ActiveDropdown.PosY && mouseY <= ActiveDropdown.PosY+len(ActiveDropdown.Options) {
+				// Dropdown button clicked
+				ActiveDropdown.Selected = mouseY - ActiveDropdown.PosY - 1
+				ActiveDropdown.Action(ActiveDropdown.Selected)
+			} else {
+				// Exit top menu
+				ClearDropdowns()
+				window.CursorMode = CursorModeBuffer
+			}
+		} else if mouseX >= x1 && mouseY >= y1 && mouseX <= x2 && mouseY <= y2 && window.CursorMode == CursorModeBuffer {
+			// Mouse is in buffer area
 			currentPos := window.CurrentBuffer.CursorPos
 			mouseBufferPos := Position{mouseX + window.CurrentBuffer.Offset.X - x1, mouseY + window.CurrentBuffer.Offset.Y - y1}
 
