@@ -604,7 +604,7 @@ func GetOpenFileBuffer(filename string) *Buffer {
 	return nil
 }
 
-func CreateFileBuffer(filename string, openNonExistentFile bool) (*Buffer, error) {
+func CreateFileBuffer(filename string) (*Buffer, error) {
 	// Replace tilde with home directory
 	if filename != "~" && strings.HasPrefix(filename, "~/") {
 		homedir, err := os.UserHomeDir()
@@ -623,22 +623,20 @@ func CreateFileBuffer(filename string, openNonExistentFile bool) (*Buffer, error
 	}
 
 	stat, err := os.Stat(abs)
-	if !openNonExistentFile {
-		if err != nil {
+	if err != nil {
+		if !os.IsNotExist(err) {
 			return nil, err
 		}
-
-		if !stat.Mode().IsRegular() {
-			return nil, fmt.Errorf("%s is not a regular file", filename)
-		}
+	} else if !stat.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular file")
 	}
 
 	if GetBufferByName(filename) != nil {
-		return nil, fmt.Errorf("a buffer with the name (%s) is already open", filename)
+		return nil, fmt.Errorf("a buffer with the same name is already open")
 	}
 
 	if GetBufferByFilename(abs) != nil {
-		return nil, fmt.Errorf("%s is already open in another buffer", filename)
+		return nil, fmt.Errorf("file is already open in another buffer")
 	}
 
 	buffer := Buffer{
@@ -675,7 +673,7 @@ func CreateBuffer(bufferName string) (*Buffer, error) {
 	}
 
 	if GetBufferByName(bufferName) != nil {
-		return nil, fmt.Errorf("a buffer with the name (%s) is already open", bufferName)
+		return nil, fmt.Errorf("a buffer with the same name is already open")
 	}
 
 	Buffers = append(Buffers, &buffer)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	flag "github.com/spf13/pflag"
@@ -45,9 +46,9 @@ func main() {
 	// Open paths passed as arguments
 	if flag.NArg() > 0 {
 		for _, file := range flag.Args() {
-			buffer, err := CreateFileBuffer(file, true)
+			buffer, err := CreateFileBuffer(file)
 			if err != nil {
-				window.PrintMessage("Could not open file: "+file, TYPER_MESSAGE_ERROR)
+				window.PrintMessage(fmt.Sprintf("Could not open file %s: %s", file, err), TYPER_MESSAGE_ERROR)
 				continue
 			}
 
@@ -55,7 +56,9 @@ func main() {
 				window.CurrentBuffer = buffer
 			}
 		}
-	} else {
+	}
+
+	if window.CurrentBuffer == nil {
 		buffer, err := CreateBuffer("New Buffer 1")
 		if err == nil {
 			window.CurrentBuffer = buffer

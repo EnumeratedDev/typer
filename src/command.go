@@ -141,9 +141,9 @@ func initCommands() {
 					window.PrintMessage(fmt.Sprintf("File already open! Switching to buffer: %s", openBuffer.Name), TYPER_MESSAGE_INFO)
 					window.CurrentBuffer = openBuffer
 				} else {
-					newBuffer, err := CreateFileBuffer(input, false)
+					newBuffer, err := CreateFileBuffer(input)
 					if err != nil {
-						window.PrintMessage(fmt.Sprintf("Could not open file: %s", err.Error()), TYPER_MESSAGE_WARNING)
+						window.PrintMessage(fmt.Sprintf("Could not open file %s: %s", input, err), TYPER_MESSAGE_ERROR)
 						return
 					}
 
