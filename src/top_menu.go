@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"typer/runestring"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -151,9 +152,7 @@ func getBufferInfoMsg(window *Window) string {
 		filetype = window.CurrentBuffer.filetype
 	}
 
-	contents := window.CurrentBuffer.GetContentsAsString()
-	chars := len(contents)
-	words := len(strings.Fields(string(contents)))
+	var contents runestring.RuneString = nil
 
 	ret := Config.BufferInfoMessage
 
@@ -163,9 +162,25 @@ func getBufferInfoMsg(window *Window) string {
 	ret = strings.ReplaceAll(ret, "%t", filetype)
 	ret = strings.ReplaceAll(ret, "%x", strconv.Itoa(window.CurrentBuffer.CursorPos.X+1))
 	ret = strings.ReplaceAll(ret, "%y", strconv.Itoa(window.CurrentBuffer.CursorPos.Y+1))
-	ret = strings.ReplaceAll(ret, "%p", strconv.Itoa(window.CurrentBuffer.PositionToAbsolutePosition(window.CurrentBuffer.CursorPos)+1))
-	ret = strings.ReplaceAll(ret, "%c", strconv.Itoa(chars))
-	ret = strings.ReplaceAll(ret, "%w", strconv.Itoa(words))
+
+	// Only replace if found for expensive calls
+	if strings.Contains(ret, "%p") {
+		ret = strings.ReplaceAll(ret, "%p", strconv.Itoa(window.CurrentBuffer.PositionToAbsolutePosition(window.CurrentBuffer.CursorPos)+1))
+	}
+	if strings.Contains(ret, "%c") {
+		contents = window.CurrentBuffer.GetContentsAsString()
+
+		chars := len(contents)
+		ret = strings.ReplaceAll(ret, "%c", strconv.Itoa(chars))
+	}
+	if strings.Contains(ret, "%w") {
+		if contents == nil {
+			contents = window.CurrentBuffer.GetContentsAsString()
+		}
+
+		words := len(strings.Fields(string(contents)))
+		ret = strings.ReplaceAll(ret, "%w", strconv.Itoa(words))
+	}
 
 	return ret
 }
